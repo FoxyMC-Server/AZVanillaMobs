@@ -102,9 +102,7 @@ class Fox extends Animal {
     }
 
     protected function calculateAI(): void {
-
         if ($this->heldItem === null || $this->heldItem->isNull()) {
-
             if ($this->targetItemEntity !== null && ($this->targetItemEntity->isClosed() || !$this->targetItemEntity->isAlive() || $this->targetItemEntity->getWorld() !== $this->getWorld())) {
                 $this->targetItemEntity = null;
             }
@@ -129,16 +127,15 @@ class Fox extends Animal {
 
                 $dist = $this->location->distanceSquared($this->targetItemEntity->getLocation());
                 if ($dist < 1.5 && $this->spitDelay <= 0) {
-
-                    $item = $this->targetItemEntity->getItem();
+                    $item = clone $this->targetItemEntity->getItem();
                     $singleItem = clone $item;
                     $singleItem->setCount(1);
 
+                    $this->targetItemEntity->flagForDespawn();
+
                     if ($item->getCount() > 1) {
                         $item->setCount($item->getCount() - 1);
-                        $this->targetItemEntity->setItem($item);
-                    } else {
-                        $this->targetItemEntity->flagForDespawn();
+                        $this->getWorld()->dropItem($this->targetItemEntity->getLocation(), $item);
                     }
 
                     $this->equipItem($singleItem);
