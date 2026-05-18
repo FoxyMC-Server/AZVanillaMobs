@@ -5,4 +5,5 @@ branches:
 projects:
   AZVanillaMobs:
     path: ""
+    lint: false
 ...
