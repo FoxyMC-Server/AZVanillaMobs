@@ -1,0 +1,16 @@
+---
+# AZVanillaMobs Configuration
+
+# Map your worlds to their specific dimension type (overworld, nether, the_end)
+# This allows the plugin to spawn the correct mobs regardless of what you name your worlds!
+worlds:
+  "skyblock": "overworld"
+  "nether": "nether"
+  "the_end": "the_end"
+
+# Global cap for maximum mobs allowed on the server at once
+global-mob-cap: 200
+
+# Cap for maximum mobs allowed per world
+per-world-mob-cap: 70
+...

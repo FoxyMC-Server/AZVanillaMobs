@@ -1,0 +1,13 @@
+name: AZVanillaMobs
+version: 1.0.0
+main: BeeAZ\AZVanillaMobs\Main
+api: 5.0.0
+author: BeeAZ
+description: Absolute performance optimized Vanilla Mobs system!
+permissions:
+  azvanillamobs.command.summon:
+    description: "Allows summoning of AZVanillaMobs"
+    default: op
+  azvanillamobs.command.kill:
+    description: "Allows killing of AZVanillaMobs"
+    default: op
