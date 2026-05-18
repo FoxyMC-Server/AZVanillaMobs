@@ -147,23 +147,30 @@ worlds:
 
 global-mob-cap: 200
 per-world-mob-cap: 70
-'
-##🚀 Installation
-Place the plugin into the plugins/ folder
-Start the server
-Edit plugin_data/AZVanillaMobs/config.yml
-Restart the server
-##❓ FAQ
-Q: Why are mobs not spawning?
+```
 
-Check your world mappings and mob cap settings in config.yml.
+---
 
-Q: Can I disable natural spawning?
+## 🚀 Installation
 
-Set per-world-mob-cap: 0 or remove the world from the config.
+1. Place the plugin into the `plugins/` folder
+2. Start the server
+3. Edit `plugin_data/AZVanillaMobs/config.yml`
+4. Restart the server
 
-Q: Does /azkill affect other plugins?
+---
 
-No. It only removes entities from BeeAZ\AZVanillaMobs.
+## ❓ FAQ
 
-Made with ❤️ by BeeAZ
+### Q: Why are mobs not spawning?
+Check your world mappings and mob cap settings in `config.yml`.
+
+### Q: Can I disable natural spawning?
+Set `per-world-mob-cap: 0` or remove the world from the config.
+
+### Q: Does `/azkill` affect other plugins?
+No. It only removes entities from `BeeAZ\AZVanillaMobs`.
+
+---
+
+*Made with ❤️ by BeeAZ*
