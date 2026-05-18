@@ -13,7 +13,7 @@ class Ocelot extends Animal {
 
     public function isBreedingItem(\pocketmine\item\Item $item): bool {
         $typeId = $item->getTypeId();
-        return $typeId === \pocketmine\item\VanillaItems::RAW_COD()->getTypeId() ||
+        return $typeId === \pocketmine\item\VanillaItems::RAW_FISH()->getTypeId() ||
                $typeId === \pocketmine\item\VanillaItems::RAW_SALMON()->getTypeId();
     }
 }
