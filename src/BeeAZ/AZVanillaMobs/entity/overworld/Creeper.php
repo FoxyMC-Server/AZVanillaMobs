@@ -109,7 +109,7 @@ class Creeper extends \BeeAZ\AZVanillaMobs\entity\Monster {
                 $dir = new \pocketmine\math\Vector3(1, 0, 0);
             }
 
-            $this->targetPosition = $this->location->add($dir->multiply(8.0));
+            $this->targetPosition = $this->location->addVector($dir->multiply(8.0));
             return;
         }
 
