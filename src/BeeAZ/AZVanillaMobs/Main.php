@@ -20,12 +20,11 @@ class Main extends PluginBase {
         $map = $this->getServer()->getCommandMap();
         $cmd = $map->getCommand("summon");
         if ($cmd !== null) $map->unregister($cmd);
-        $map->register("azvanillamobs", new \BeeAZ\AZVanillaMobs\command\SummonCommand($this));
-        $map->register("azvanillamobs", new \BeeAZ\AZVanillaMobs\command\KillCommand($this));
+        $map->register("AZVanillaMobs", new \BeeAZ\AZVanillaMobs\command\SummonCommand($this));
+        $map->register("AZVanillaMobs", new \BeeAZ\AZVanillaMobs\command\KillCommand($this));
 
         $this->registerEntities();
         $this->getScheduler()->scheduleRepeatingTask(new \BeeAZ\AZVanillaMobs\spawner\SpawnerTask($this), 20);
-        $this->getLogger()->info("AZVanillaMobs has been enabled with highly optimized AI!");
     }
 
     public array $spawnerLists = [

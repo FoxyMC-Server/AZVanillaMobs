@@ -9,13 +9,19 @@ use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 use pocketmine\entity\EntityFactory;
 use pocketmine\entity\Location;
+use pocketmine\plugin\PluginOwned;
+use pocketmine\plugin\PluginOwnedTrait;
 use BeeAZ\AZVanillaMobs\Main;
 
-class SummonCommand extends Command {
+class SummonCommand extends Command implements PluginOwned {
+    use PluginOwnedTrait {
+        PluginOwnedTrait::__construct as private __traitConstruct;
+    }
 
     private Main $plugin;
 
     public function __construct(Main $plugin) {
+        $this->__traitConstruct($plugin);
         parent::__construct("summon", "Summon an AZVanillaMob", "/summon <mob> [amount]", ["azsummon"]);
         $this->setPermission("azvanillamobs.command.summon");
         $this->plugin = $plugin;

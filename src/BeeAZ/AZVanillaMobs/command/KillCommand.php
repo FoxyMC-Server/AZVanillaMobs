@@ -8,13 +8,19 @@ use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 use pocketmine\entity\Entity;
+use pocketmine\plugin\PluginOwned;
+use pocketmine\plugin\PluginOwnedTrait;
 use BeeAZ\AZVanillaMobs\Main;
 
-class KillCommand extends Command {
+class KillCommand extends Command implements PluginOwned {
+    use PluginOwnedTrait {
+        PluginOwnedTrait::__construct as private __traitConstruct;
+    }
 
     private Main $plugin;
 
     public function __construct(Main $plugin) {
+        $this->__traitConstruct($plugin);
         parent::__construct("azkill", "Kill all or specific entities (including projectiles)", "/azkill <@e|name>", ["killallmobs"]);
         $this->setPermission("azvanillamobs.command.kill");
         $this->plugin = $plugin;
