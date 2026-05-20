@@ -26,7 +26,7 @@ class Camel extends Animal {
 
     public function isBreedingItem(\pocketmine\item\Item $item): bool {
         $typeId = $item->getTypeId();
-        return $typeId === \pocketmine\item\VanillaItems::CACTUS()->getTypeId();
+        return $typeId === \pocketmine\block\VanillaBlocks::CACTUS()->asItem()->getTypeId();
     }
 
     protected function initEntity(CompoundTag $nbt): void {
