@@ -75,13 +75,9 @@ abstract class BaseMob extends Living {
             $hasUpdate = true;
 
             if ($this->isUndead() && $this->getWorld()->getTimeOfDay() < \pocketmine\world\World::TIME_NIGHT) {
-<<<<<<< HEAD
                 $x = $this->location->getFloorX();
                 $z = $this->location->getFloorZ();
                 if ($this->getWorld()->isChunkGenerated($x >> 4, $z >> 4) && $this->getWorld()->getHighestBlockAt($x, $z) <= $this->location->getFloorY()) {
-=======
-                if ($this->getWorld()->getHighestBlockAt($this->location->getFloorX(), $this->location->getFloorZ()) <= $this->location->getFloorY()) {
->>>>>>> 018dd6d048cbb1352c9a33566660fd435ec30cfb
                     $helmet = $this->getArmorInventory() !== null ? $this->getArmorInventory()->getHelmet() : null;
                     if ($helmet === null || $helmet->isNull()) {
                         $this->setOnFire(8);
