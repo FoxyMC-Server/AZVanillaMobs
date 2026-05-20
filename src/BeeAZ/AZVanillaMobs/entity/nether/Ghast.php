@@ -90,7 +90,6 @@ class Ghast extends Monster {
                 $randY = mt_rand(-2, 4);
                 $newPos = $this->location->add($randX, $randY, $randZ);
 
-<<<<<<< HEAD
                 $chunkX = (int)floor($newPos->x) >> 4;
                 $chunkZ = (int)floor($newPos->z) >> 4;
                 if ($this->getWorld()->isChunkGenerated($chunkX, $chunkZ)) {
@@ -102,16 +101,6 @@ class Ghast extends Monster {
                     if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
                         $this->targetPosition = $newPos;
                     }
-=======
-                $highestBlockY = $this->getWorld()->getHighestBlockAt((int)floor($newPos->x), (int)floor($newPos->z));
-                if ($highestBlockY !== null) {
-                    $targetY = max($highestBlockY + 3.0, min($highestBlockY + 16, $newPos->y));
-                    $newPos->y = $targetY;
-                }
-
-                if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
-                    $this->targetPosition = $newPos;
->>>>>>> 018dd6d048cbb1352c9a33566660fd435ec30cfb
                 }
             }
         }
