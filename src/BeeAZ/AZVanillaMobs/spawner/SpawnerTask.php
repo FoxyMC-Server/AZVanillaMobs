@@ -59,7 +59,13 @@ class SpawnerTask extends Task {
         $x = $pos->getFloorX() + mt_rand(-24, 24);
         $z = $pos->getFloorZ() + mt_rand(-24, 24);
 
+<<<<<<< HEAD
+        $chunkX = $x >> 4;
+        $chunkZ = $z >> 4;
+        if (!$world->isChunkGenerated($chunkX, $chunkZ)) {
+=======
         if (abs($x - $pos->getFloorX()) < 10 && abs($z - $pos->getFloorZ()) < 10) {
+>>>>>>> 018dd6d048cbb1352c9a33566660fd435ec30cfb
             return;
         }
 

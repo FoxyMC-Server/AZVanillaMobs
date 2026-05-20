@@ -110,6 +110,19 @@ abstract class Monster extends BaseMob {
                             $this->targetPosition = $newPos;
                         }
                     } else {
+<<<<<<< HEAD
+                        $chunkX = (int)floor($newPos->x) >> 4;
+                        $chunkZ = (int)floor($newPos->z) >> 4;
+                        if ($this->getWorld()->isChunkGenerated($chunkX, $chunkZ)) {
+                            $highestBlockY = $this->getWorld()->getHighestBlockAt((int)floor($newPos->x), (int)floor($newPos->z));
+                            if ($highestBlockY !== null) {
+                                $targetY = max($highestBlockY + 1.5, min($highestBlockY + 8, $newPos->y));
+                                $newPos->y = $targetY;
+                            }
+                            if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
+                                $this->targetPosition = $newPos;
+                            }
+=======
                         $highestBlockY = $this->getWorld()->getHighestBlockAt((int)floor($newPos->x), (int)floor($newPos->z));
                         if ($highestBlockY !== null) {
                             $targetY = max($highestBlockY + 1.5, min($highestBlockY + 8, $newPos->y));
@@ -117,6 +130,7 @@ abstract class Monster extends BaseMob {
                         }
                         if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
                             $this->targetPosition = $newPos;
+>>>>>>> 018dd6d048cbb1352c9a33566660fd435ec30cfb
                         }
                     }
                 } else {
