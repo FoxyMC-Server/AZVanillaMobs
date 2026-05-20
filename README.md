@@ -1,143 +1,117 @@
 # 🐾 AZVanillaMobs
 
-**A highly optimized vanilla mobs plugin for PocketMine-MP 5**
+<p align="center">
+  <img src="https://github.com/BeeAZ-pm-pl/AZVanillaMobs/blob/master/icon.png" width="140" height="140" alt="AZVanillaMobs Icon">
+</p>
 
-> Complete vanilla mob system featuring intelligent AI, natural spawning, loot tables, villager trading, taming, riding mechanics, and over 65 entities.
+<p align="center">
+  <b>Highly optimized vanilla mobs plugin for PocketMine-MP 5</b>
+</p>
 
----
-
-## 📋 General Information
-
-| Property | Value |
-|---|---|
-| **Plugin Name** | AZVanillaMobs |
-| **Version** | 1.0.0 |
-| **Author** | BeeAZ |
-| **API** | PocketMine-MP 5.0.0 |
-| **License** | MIT |
+<p align="center">
+  Bring true vanilla mob AI, combat, spawning, and gameplay mechanics to your server.
+</p>
 
 ---
 
-## 🎮 Main Features
+# ✨ Features
 
-### ⚙️ Optimized AI System
-- AI updates every 10 ticks instead of every tick for better performance
-- Random `tickOffset` per entity to distribute CPU load evenly
-- Lightweight pathfinding system with jumping, swimming, and cliff avoidance
-- Separate handling for flying, aquatic, and ground mobs
+## 🧠 Advanced Vanilla AI
+- Optimized AI system for better server performance
+- Smart movement and pathfinding
+- Swimming, flying, jumping, and cliff avoidance
+- Improved fish swimming AI
+- Better hostile mob targeting behavior
 
-### 🌍 Natural Spawning
-- Mobs naturally spawn around players (10–24 block radius)
-- Hostile mobs only spawn at night with light level ≤ 7
-- Passive mobs spawn on grass during daytime
-- Aquatic mobs spawn in water, Nether mobs spawn in the Nether
-- Configurable global and per-world mob caps
+## ⚔️ Vanilla Combat System
+- Vanilla-accurate damage values for every mob
+- Cave Spider poison attacks
+- Wither Skeleton applies Wither effect
+- Husk applies Hunger effect
+- Snow Golems attack hostile mobs using snowballs
+- Attack animations and realistic combat mechanics
 
-### ⚔️ Combat System
-- Monsters chase players within 16 blocks
-- Ignores Creative and Spectator players
-- Attack animations included
-- Undead mobs burn in sunlight unless wearing helmets
-- Random armor equipment for monsters
+## 🌍 Natural Vanilla Spawning
+- Vanilla-style mob spawning system
+- Passive mobs spawn during daytime
+- Hostile mobs spawn at night
+- Aquatic mobs spawn in water
+- Nether and End exclusive spawning
+- Vanilla Phantom spawning mechanics
 
-### 💀 Loot System
-- Vanilla-accurate loot tables
-- Cooked drops when mobs die in fire
-- Rare drop chances supported
-- XP drops for all mobs
+## 🌊 Aquatic Features
+- Improved fish AI and movement
+- Added fish bucket variants:
+  - Cod Bucket
+  - Salmon Bucket
+  - Tropical Fish Bucket
+  - Pufferfish Bucket
 
-### 🥚 Spawn Eggs
-- Automatically registers spawn eggs into Creative Inventory
-- Correct entity spawning for all eggs
-- Overrides default PocketMine spawn eggs
+## ☠️ Mob Mechanics
+- Zombie → Drowned conversion
+- Undead burn in sunlight
+- Random armor equipment
+- Vanilla loot tables
+- XP drops
+- Cooked drops from fire deaths
 
----
-
-## 🐛 Entity List (65+ Entities)
-
-### 🌳 Overworld Hostile Mobs
-Zombie, Skeleton, Creeper, Spider, Cave Spider, Slime, Witch, Husk, Drowned, Stray, Phantom, Zombie Villager, Vindicator, Evoker, Pillager, Ravager, Vex, Guardian, Elder Guardian, Silverfish.
-
-### 🌳 Overworld Passive Mobs
-Cow, Pig, Sheep, Chicken, Wolf, Cat, Ocelot, Horse, Donkey, Mule, Llama, Trader Llama, Fox, Panda, Turtle, Dolphin, Squid, Glow Squid, Bat, Villager, Wandering Trader, Iron Golem, Snow Golem, Axolotl, Goat, Frog, Tadpole, Camel, Sniffer, Allay, Bee.
-
-### 🔥 Nether Mobs
-Zombified Piglin, Piglin, Piglin Brute, Hoglin, Zoglin, Ghast, Blaze, Magma Cube, Wither Skeleton, Strider.
-
-### 🟣 The End Mobs
-Enderman, Endermite, Shulker, Ender Dragon.
-
-### 💥 Projectiles
-GhastFireball, BlazeFireball, WitchPotion.
-
----
-
-## 🐴 Rideable Mobs
-
-Supported rideable mobs:
-- Horse
-- Donkey
-- Mule
-- Pig
-- Camel
-- Panda
-
-Features:
-- WASD movement
-- Jump support
-- Sneak to dismount
+## 🐴 Interactive Mobs
+- Rideable mobs support
 - Horse armor support
+- Wolf taming system
+- Cat taming system
+- Villager professions and leveling
+- Piglin bartering
 
 ---
 
-## 🐺 Taming System
+# 📦 Included Entities
 
-### Wolf
-- Tame using Bones
-- Sit/stand toggle
-- Owner following system
-- Collar dye support
-- Attacks hostile targets
+## 🌳 Overworld
+Zombie, Skeleton, Creeper, Spider, Cave Spider, Phantom, Villager, Iron Golem, Snow Golem, Fish, Axolotl, Bee, Camel, Frog, Sniffer, Allay, and many more.
 
-### Cat
-- Tame using Raw Fish
+## 🔥 Nether
+Piglin, Piglin Brute, Blaze, Ghast, Hoglin, Zoglin, Magma Cube, Wither Skeleton, Strider, and more.
 
----
+## 🟣 The End
+Enderman, Shulker, Endermite, Ender Dragon.
 
-## 🏪 Villager Trading
-
-- Fully functional villager trading UI
-- Randomized trade recipes
-- Unlimited trading
-- Piglin bartering system included
+> Includes 65+ vanilla entities and projectiles.
 
 ---
 
-## 🏗️ Golem Creation
+# ⚡ Performance Optimized
 
-### Iron Golem
-Create using:
-- 4 Iron Blocks
-- 1 Pumpkin or Carved Pumpkin
+AZVanillaMobs is built specifically for PocketMine-MP performance:
 
-### Snow Golem
-Create using:
-- 2 Snow Blocks
-- 1 Pumpkin or Carved Pumpkin
+- Distributed AI updates
+- Lightweight entity processing
+- Optimized pathfinding
+- Reduced CPU usage
+- Multiplayer friendly
 
 ---
 
-## 🔧 Commands
+# 🐛 Recent Improvements
 
-### `/summon <mob> [amount]`
-Spawn mobs at your location.
-
-### `/azkill <@e|mob>`
-Remove plugin entities.
+- Fixed fish getting stuck against walls
+- Fixed delayed Creeper explosions
+- Fixed Creeper explosion visual glitches in water
+- Improved mob AI and movement behavior
+- Improved vanilla gameplay accuracy
 
 ---
 
-## ⚙️ Configuration
+# 🔧 Commands
+
+| Command | Description |
+|---|---|
+| `/summon <mob> [amount]` | Spawn a mob |
+| `/azkill <@e|mob>` | Remove plugin entities |
+
+---
+
+# ⚙️ Configuration
 
 ```yaml
 worlds:
@@ -151,26 +125,26 @@ per-world-mob-cap: 70
 
 ---
 
-## 🚀 Installation
+# 🚀 Installation
 
-1. Place the plugin into the `plugins/` folder
-2. Start the server
-3. Edit `plugin_data/AZVanillaMobs/config.yml`
-4. Restart the server
-
----
-
-## ❓ FAQ
-
-### Q: Why are mobs not spawning?
-Check your world mappings and mob cap settings in `config.yml`.
-
-### Q: Can I disable natural spawning?
-Set `per-world-mob-cap: 0` or remove the world from the config.
-
-### Q: Does `/azkill` affect other plugins?
-No. It only removes entities from `BeeAZ\AZVanillaMobs`.
+1. Download the plugin
+2. Put the `.phar` file into the `plugins/` folder
+3. Start the server
+4. Configure `plugin_data/AZVanillaMobs/config.yml`
+5. Restart the server
 
 ---
 
-*Made with ❤️ by BeeAZ*
+# 📌 Compatibility
+
+- PocketMine-MP 5.x
+- API 5.0.0+
+- PHP 8+
+
+---
+
+# ❤️ Credits
+
+Developed by **BeeAZ**
+
+Made for servers that want a true vanilla mob experience on PocketMine-MP.
