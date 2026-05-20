@@ -62,6 +62,10 @@ class SummonCommand extends Command {
             \BeeAZ\AZVanillaMobs\entity\overworld\Turtle::class,
             \BeeAZ\AZVanillaMobs\entity\overworld\Guardian::class,
             \BeeAZ\AZVanillaMobs\entity\overworld\ElderGuardian::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Cod::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Salmon::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Pufferfish::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\TropicalFish::class,
         ];
         $isAquatic = in_array($targetClass, $aquaticClasses, true);
 
@@ -80,7 +84,8 @@ class SummonCommand extends Command {
         for ($i = 0; $i < $amount; $i++) {
             $spawnPos = clone $sender->getPosition();
 
-            if ($isAquatic && !$sender->isInsideOfWater()) {
+            $isSenderInWater = $sender->getWorld()->getBlock($sender->getPosition()) instanceof \pocketmine\block\Water || $sender->getWorld()->getBlock($sender->getPosition()->add(0, 1, 0)) instanceof \pocketmine\block\Water;
+            if ($isAquatic && !$isSenderInWater) {
 
                 $foundWater = null;
                 for ($x = -8; $x <= 8; $x++) {

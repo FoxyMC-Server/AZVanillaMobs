@@ -117,6 +117,10 @@ class SpawnerTask extends Task {
             \BeeAZ\AZVanillaMobs\entity\overworld\Turtle::class,
             \BeeAZ\AZVanillaMobs\entity\overworld\Guardian::class,
             \BeeAZ\AZVanillaMobs\entity\overworld\ElderGuardian::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Cod::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Salmon::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\Pufferfish::class,
+            \BeeAZ\AZVanillaMobs\entity\overworld\TropicalFish::class,
         ];
 
         if (!empty($list)) {
@@ -143,7 +147,11 @@ class SpawnerTask extends Task {
             if (empty($filteredList)) return;
             $class = $filteredList[array_rand($filteredList)];
 
-            $spawnY = $isWater ? $y : $y + 1;
+            if ($class === \BeeAZ\AZVanillaMobs\entity\overworld\Phantom::class) {
+                $spawnY = $y + mt_rand(20, 25);
+            } else {
+                $spawnY = $isWater ? $y : $y + 1;
+            }
             $spawnPos = new Position($x + 0.5, $spawnY, $z + 0.5, $world);
 
             $entity = new $class(Location::fromObject($spawnPos, $world, mt_rand(0, 360), 0));

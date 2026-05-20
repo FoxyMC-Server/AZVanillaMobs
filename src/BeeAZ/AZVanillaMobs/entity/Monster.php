@@ -37,6 +37,26 @@ abstract class Monster extends BaseMob {
 
     protected function calculateAI(): void {
 
+        if ($this->isSwimming()) {
+            if ($this->targetPosition === null || mt_rand(1, 100) <= 15) {
+                $foundWater = [];
+                for ($x = -6; $x <= 6; $x++) {
+                    for ($y = -3; $y <= 3; $y++) {
+                        for ($z = -6; $z <= 6; $z++) {
+                            $pos = $this->location->add($x, $y, $z);
+                            if ($this->getWorld()->getBlock($pos) instanceof \pocketmine\block\Water) {
+                                $foundWater[] = $pos;
+                            }
+                        }
+                    }
+                }
+                if (!empty($foundWater)) {
+                    $this->targetPosition = $foundWater[array_rand($foundWater)];
+                }
+            }
+            return;
+        }
+
         if ($this->isAquatic() && !$this->isSwimming()) {
             if ($this->targetPosition === null || mt_rand(1, 100) <= 20) {
                 $foundWater = null;
@@ -90,6 +110,26 @@ abstract class Monster extends BaseMob {
                 $ev = new EntityDamageByEntityEvent($this, $nearest, EntityDamageEvent::CAUSE_ENTITY_ATTACK, $this->getAttackDamage());
                 $nearest->attack($ev);
 
+                if ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\CaveSpider) {
+                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                        \pocketmine\entity\effect\VanillaEffects::POISON(),
+                        100, 
+                        0
+                    ));
+                } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\nether\WitherSkeleton) {
+                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                        \pocketmine\entity\effect\VanillaEffects::WITHER(),
+                        200, 
+                        0
+                    ));
+                } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Husk) {
+                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                        \pocketmine\entity\effect\VanillaEffects::HUNGER(),
+                        140, 
+                        0
+                    ));
+                }
+
                 $pk = new \pocketmine\network\mcpe\protocol\AnimatePacket();
                 $pk->action = \pocketmine\network\mcpe\protocol\AnimatePacket::ACTION_SWING_ARM;
                 $pk->actorRuntimeId = $this->getId();
@@ -130,8 +170,8 @@ abstract class Monster extends BaseMob {
         }
     }
 
-    protected function getAttackDamage(): float {
-        return 3.0;
+    public function getAttackDamage(): float {
+        return parent::getAttackDamage();
     }
 
     public function getXpDropAmount(): int {

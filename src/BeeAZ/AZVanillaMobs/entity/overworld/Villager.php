@@ -23,10 +23,10 @@ use pocketmine\math\Vector3;
 
 class Villager extends Animal {
 
-    private int $profession = 0; // 0: Unemployed, 1-13: Jobs, 14: Nitwit
-    private int $biome = 0;      // 0: Plains, 1: Desert, 2: Jungle, 3: Savanna, 4: Swamp, 5: Taiga, 6: Snowy
-    private int $level = 1;      // 1-5
-    private int $xp = 0;         // Current trade XP
+    private int $profession = 0; 
+    private int $biome = 0;      
+    private int $level = 1;      
+    private int $xp = 0;         
     private ?Vector3 $jobSite = null;
     private ?TradeInventory $tradeInventory = null;
     protected ?array $tradeRecipes = null;
@@ -34,7 +34,7 @@ class Villager extends Animal {
     private int $lastRestockTick = 0;
     private int $hostility = 0;
 
-    public static array $claimedJobSites = []; // "world:x:y:z" => entity_id
+    public static array $claimedJobSites = []; 
 
     public static function getNetworkTypeId(): string {
         return "minecraft:villager_v2";
@@ -78,7 +78,7 @@ class Villager extends Animal {
         $this->xp += $amount;
         $this->updateNetworkProperties();
 
-        // Level up thresholds: Novice (10 XP) -> Apprentice (70 XP) -> Journeyman (150 XP) -> Expert (250 XP) -> Master
+        
         $thresholds = [1 => 10, 2 => 70, 3 => 150, 4 => 250];
         if (isset($thresholds[$this->level]) && $this->xp >= $thresholds[$this->level]) {
             $this->level++;
@@ -230,7 +230,7 @@ class Villager extends Animal {
 
         if ($this->profession === 14) return;
 
-        // 1. Search for job block if not claimed yet
+        
         if ($this->jobSite === null) {
             $startX = (int)floor($pos->x) - 4;
             $endX = (int)floor($pos->x) + 4;
@@ -246,7 +246,7 @@ class Villager extends Animal {
                         $prof = self::getProfessionFromBlock($block);
                         if ($prof !== null) {
                             if ($this->xp > 0 && $prof !== $this->profession) {
-                                continue; // Lock profession if already traded
+                                continue; 
                             }
 
                             $key = $world->getFolderName() . ":" . $x . ":" . $y . ":" . $z;
@@ -272,7 +272,7 @@ class Villager extends Animal {
             }
         }
 
-        // 2. Validate claimed job site block
+        
         if ($this->jobSite !== null) {
             $block = $world->getBlock($this->jobSite);
             $prof = self::getProfessionFromBlock($block);
@@ -421,7 +421,7 @@ class Villager extends Animal {
         $pool = [];
         try {
             switch ($profession) {
-                case 1: // Farmer
+                case 1: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("wheat", 20), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("potato", 26), 'sell' => self::getItem("emerald", 1)];
@@ -441,7 +441,7 @@ class Villager extends Animal {
                     }
                     break;
                     
-                case 2: // Fisherman
+                case 2: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("coal", 10), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("raw_cod", 15), 'sell' => self::getItem("emerald", 1)];
@@ -459,7 +459,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 3: // Shepherd
+                case 3: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("white_wool", 18), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("shears", 1)];
@@ -477,7 +477,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 4: // Fletcher
+                case 4: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("gravel", 10), 'buyB' => self::getItem("emerald", 1), 'sell' => self::getItem("flint", 10)];
                         $pool[] = ['buyA' => self::getItem("flint", 26), 'sell' => self::getItem("emerald", 1)];
@@ -493,7 +493,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 5: // Librarian
+                case 5: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("paper", 24), 'sell' => self::getItem("emerald", 1)];
                         
@@ -520,7 +520,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 6: // Cartographer
+                case 6: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("paper", 24), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 7), 'sell' => self::getItem("map", 1)];
@@ -535,7 +535,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 7: // Cleric
+                case 7: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("rotten_flesh", 32), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("redstone", 2)];
@@ -552,7 +552,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 8: // Armorer
+                case 8: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("coal", 15), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 4), 'sell' => self::getItem("iron_boots", 1)];
@@ -570,7 +570,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 9: // Butcher
+                case 9: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("raw_chicken", 14), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("raw_porkchop", 7), 'sell' => self::getItem("emerald", 1)];
@@ -588,7 +588,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 10: // Leatherworker
+                case 10: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("leather", 6), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 4), 'sell' => self::getItem("leather_boots", 1)];
@@ -604,7 +604,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 11: // Toolsmith
+                case 11: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("coal", 15), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("stone_axe", 1)];
@@ -620,7 +620,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 12: // Weaponsmith
+                case 12: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("coal", 15), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("iron_axe", 1)];
@@ -636,7 +636,7 @@ class Villager extends Animal {
                     }
                     break;
 
-                case 13: // Mason
+                case 13: 
                     if ($tier === 1) {
                         $pool[] = ['buyA' => self::getItem("clay", 10), 'sell' => self::getItem("emerald", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("brick", 10)];
@@ -655,7 +655,7 @@ class Villager extends Animal {
                     break;
             }
         } catch (\Throwable $e) {
-            // Ignore missing item parsing issues during load
+            
         }
         return $pool;
     }
@@ -690,7 +690,7 @@ class Villager extends Animal {
                             'demand' => $tag->getInt("demand", 0),
                         ];
                     } catch (\Throwable $t) {
-                        // Skip corrupted/invalid NBT item tags
+                        
                     }
                 }
             }
@@ -748,7 +748,7 @@ class Villager extends Animal {
             $demand = $recipe['demand'] ?? 0;
             $recipe['demand'] = $demand;
             
-            // Demand inflation
+            
             $demandPriceA = (int) floor($demand * $recipe['priceMultiplierA'] * $originalCountA);
             if ($demand > 0 && $demandPriceA === 0) {
                 $demandPriceA = (int) ceil($demand * 0.1);

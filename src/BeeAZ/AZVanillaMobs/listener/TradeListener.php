@@ -95,7 +95,7 @@ class TradeListener implements Listener {
 
                 $addComplexMethod = $reflection->getMethod("addComplex");
                 $addComplexMethod->setAccessible(true);
-                // Map slots 4->0, 5->1, 6->2, 7->3, 8->4
+                
                 $addComplexMethod->invoke($invManager, [4 => 0, 5 => 1, 6 => 2, 7 => 3, 8 => 4], $inv);
 
                 $associateMethod = $reflection->getMethod("associateIdWithInventory");
@@ -240,7 +240,7 @@ class TradeListener implements Listener {
                                         elseif ($sid === 6) $targetSlot = 2;
                                         elseif ($sid === 7) $targetSlot = 3;
                                         elseif ($sid === 8) $targetSlot = 4;
-                                        elseif ($sid !== 50) $targetSlot = 0; // Fallback
+                                        elseif ($sid !== 50) $targetSlot = 0; 
                                     } elseif ($cid === ContainerUIIds::TRADE_INGREDIENT2 || $cid === ContainerUIIds::TRADE2_INGREDIENT2) {
                                         $targetSlot = 1;
                                     } elseif ($cid === ContainerUIIds::CREATED_OUTPUT) {
@@ -289,7 +289,7 @@ class TradeListener implements Listener {
                                 $count = $countProp->getValue($action);
                             }
                             
-                            // Convert to PlaceStackRequestAction targeting our dummy slots
+                            
                             $fnClass = "pocketmine\\network\\mcpe\\protocol\\types\\inventory\\FullContainerName";
                             $cName = new $fnClass(ContainerUIIds::TRADE2_INGREDIENT1);
                             $infoClass = "pocketmine\\network\\mcpe\\protocol\\types\\inventory\\stackrequest\\ItemStackRequestSlotInfo";
@@ -312,10 +312,10 @@ class TradeListener implements Listener {
                             continue;
                         }
                         if ($action instanceof \pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CreativeCreateStackRequestAction) {
-                            return; // Don't process creative actions
+                            return; 
                         }
 
-                        // Rewrite CREATED_OUTPUT to TRADE2_INGREDIENT1 slot 6
+                        
                         $actionRefl = new \ReflectionClass($action);
                         foreach (["source", "destination"] as $propName) {
                             if ($actionRefl->hasProperty($propName)) {
@@ -363,7 +363,7 @@ class TradeListener implements Listener {
                     $inputB = $tradeInv->getItem(1);
                     $recipeIndex = null;
 
-                    // 1. Try static offset calculation first
+                    
                     $storedOffset = self::$tradeOffset[$player->getName()] ?? null;
                     if ($storedOffset !== null) {
                         $testIdx = $rawRecipeId - $storedOffset;
@@ -372,7 +372,7 @@ class TradeListener implements Listener {
                         }
                     }
 
-                    // 2. If not matched, scan for matches based on ingredients
+                    
                     if ($recipeIndex === null) {
                         $matchingIndices = [];
                         foreach ($recipes as $idx => $recipe) {
@@ -384,7 +384,7 @@ class TradeListener implements Listener {
                         if (count($matchingIndices) === 1) {
                             $recipeIndex = $matchingIndices[0];
                         } elseif (count($matchingIndices) > 1) {
-                            // Multiple recipes matched. Try using the cached clientRecipeCount.
+                            
                             $cachedClientCount = self::$clientRecipeCount[$player->getName()] ?? null;
                             if ($cachedClientCount !== null) {
                                 $testIdx = $rawRecipeId - $cachedClientCount;
@@ -399,7 +399,7 @@ class TradeListener implements Listener {
                     }
 
                     if ($recipeIndex !== null && isset($recipes[$recipeIndex])) {
-                        // Store/update the client's actual recipe offset dynamically
+                        
                         self::$clientRecipeCount[$player->getName()] = $rawRecipeId - $recipeIndex;
 
                         $recipe = $recipes[$recipeIndex];
@@ -417,7 +417,7 @@ class TradeListener implements Listener {
                             
                             \pocketmine\Server::getInstance()->getLogger()->debug("TradeListener: Set output item in slot 2. count: $totalCount");
 
-                            // Re-apply stack IDs that got overwritten by setItem
+                            
                             foreach ($spoofedStackIds as $slot => $stackId) {
                                 self::setItemStackId($player, $tradeInv, $slot, $stackId);
                                 \pocketmine\Server::getInstance()->getLogger()->debug("TradeListener: Re-applied stackId $stackId to slot $slot");
@@ -427,7 +427,7 @@ class TradeListener implements Listener {
                                 new ClosureTask(function () use ($player, $villager, $recipeIndex, $multiplier, $tradeInv): void {
                                     if (!$player->isOnline()) return;
                                     
-                                    // Clear dummy consume slots
+                                    
                                     $tradeInv->clear(3);
                                     $tradeInv->clear(4);
                                     
@@ -511,12 +511,12 @@ class TradeListener implements Listener {
         $buyA = $recipe['buyA'];
         $buyB = $recipe['buyB'] ?? null;
 
-        // Check Input A
+        
         if (!$inputA->equals($buyA, true, false) || $inputA->getCount() < $buyA->getCount()) {
             return false;
         }
 
-        // Check Input B
+        
         if ($buyB === null || $buyB->isNull()) {
             if (!$inputB->isNull()) {
                 return false;

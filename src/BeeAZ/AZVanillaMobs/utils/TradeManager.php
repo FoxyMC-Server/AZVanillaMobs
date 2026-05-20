@@ -45,7 +45,7 @@ class TradeManager {
                 ->setInt("uses", $recipeData['uses'] ?? 0)
                 ->setByte("rewardExp", (int)($recipeData['rewardExp'] ?? 1))
                 ->setInt("traderExp", $recipeData['traderExp'] ?? 2)
-                ->setInt("tier", ($recipeData['tier'] ?? 1) - 1) // Client tier index is 0-indexed (Novice is 0)
+                ->setInt("tier", ($recipeData['tier'] ?? 1) - 1) 
                 ->setFloat("priceMultiplierA", $recipeData['priceMultiplierA'] ?? 0.05)
                 ->setFloat("priceMultiplierB", $recipeData['priceMultiplierB'] ?? 0.05)
                 ->setInt("demand", $recipeData['demand'] ?? 0)

@@ -42,7 +42,7 @@ class MagmaCube extends Monster {
         return new EntitySizeInfo(1.02, 1.02);
     }
 
-    protected function getAttackDamage(): float {
+    public function getAttackDamage(): float {
         return $this->slimeSize === 4 ? 4.0 : ($this->slimeSize === 2 ? 2.0 : 0.0);
     }
 

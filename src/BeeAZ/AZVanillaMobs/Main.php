@@ -102,6 +102,10 @@ class Main extends PluginBase {
                 'minecraft:goat' => 'goat_spawn_egg',
                 'minecraft:frog' => 'frog_spawn_egg',
                 'minecraft:tadpole' => 'tadpole_spawn_egg',
+                'minecraft:cod' => 'cod_spawn_egg',
+                'minecraft:salmon' => 'salmon_spawn_egg',
+                'minecraft:pufferfish' => 'pufferfish_spawn_egg',
+                'minecraft:tropicalfish' => 'tropical_fish_spawn_egg',
                 'minecraft:camel' => 'camel_spawn_egg',
                 'minecraft:sniffer' => 'sniffer_spawn_egg',
                 'minecraft:allay' => 'allay_spawn_egg',
@@ -217,6 +221,10 @@ class Main extends PluginBase {
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Goat::class, 'Goat', 'minecraft:goat', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Frog::class, 'Frog', 'minecraft:frog', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Tadpole::class, 'Tadpole', 'minecraft:tadpole', 'overworld_passive');
+        $register(\BeeAZ\AZVanillaMobs\entity\overworld\Cod::class, 'Cod', 'minecraft:cod', 'overworld_passive');
+        $register(\BeeAZ\AZVanillaMobs\entity\overworld\Salmon::class, 'Salmon', 'minecraft:salmon', 'overworld_passive');
+        $register(\BeeAZ\AZVanillaMobs\entity\overworld\Pufferfish::class, 'Pufferfish', 'minecraft:pufferfish', 'overworld_passive');
+        $register(\BeeAZ\AZVanillaMobs\entity\overworld\TropicalFish::class, 'TropicalFish', 'minecraft:tropicalfish', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Camel::class, 'Camel', 'minecraft:camel', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Sniffer::class, 'Sniffer', 'minecraft:sniffer', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Allay::class, 'Allay', 'minecraft:allay', 'overworld_passive');
@@ -253,6 +261,34 @@ class Main extends PluginBase {
             } else {
                 \pocketmine\item\StringToItemParser::getInstance()->register("saddle", fn() => clone $saddleItem);
             }
+        } catch (\Exception $e) {}
+
+        try {
+            $registerBucket = function(string $class, string $name, string $id, string $parseId) {
+                try {
+                    $bucketId = \pocketmine\item\ItemTypeIds::newId();
+                    $bucketIdentifier = new \pocketmine\item\ItemIdentifier($bucketId);
+                    $bucketItem = new \BeeAZ\AZVanillaMobs\item\FishBucket($bucketIdentifier, $name, $class);
+
+                    \pocketmine\world\format\io\GlobalItemDataHandlers::getSerializer()->map($bucketItem, fn() => new \pocketmine\data\bedrock\item\SavedItemData("minecraft:" . $id));
+                    \pocketmine\world\format\io\GlobalItemDataHandlers::getDeserializer()->map("minecraft:" . $id, fn() => clone $bucketItem);
+
+                    \pocketmine\inventory\CreativeInventory::getInstance()->add($bucketItem, \pocketmine\inventory\CreativeCategory::NATURE);
+
+                    if (method_exists(\pocketmine\item\StringToItemParser::getInstance(), 'override')) {
+                        \pocketmine\item\StringToItemParser::getInstance()->override($parseId, fn() => clone $bucketItem);
+                    } else {
+                        \pocketmine\item\StringToItemParser::getInstance()->register($parseId, fn() => clone $bucketItem);
+                    }
+                } catch (\Exception $e) {}
+            };
+
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\Cod::class, "Cod Bucket", "cod_bucket", "cod_bucket");
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\Salmon::class, "Salmon Bucket", "salmon_bucket", "salmon_bucket");
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\Pufferfish::class, "Pufferfish Bucket", "pufferfish_bucket", "pufferfish_bucket");
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\TropicalFish::class, "Tropical Fish Bucket", "tropical_fish_bucket", "tropical_fish_bucket");
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\Axolotl::class, "Axolotl Bucket", "axolotl_bucket", "axolotl_bucket");
+            $registerBucket(\BeeAZ\AZVanillaMobs\entity\overworld\Tadpole::class, "Tadpole Bucket", "tadpole_bucket", "tadpole_bucket");
         } catch (\Exception $e) {}
     }
 }

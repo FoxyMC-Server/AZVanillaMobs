@@ -23,50 +23,49 @@ class Creeper extends \BeeAZ\AZVanillaMobs\entity\Monster {
         $properties->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::IGNITED, $this->fuse > 0);
     }
 
-    protected function calculateAI(): void {
+    public function onUpdate(int $currentTick): bool {
+        $hasUpdate = parent::onUpdate($currentTick);
+        if (!$this->isAlive() || $this->isClosed()) {
+            return $hasUpdate;
+        }
 
-        $fleeFrom = null;
-        $minFleeDist = 36.0;
-
+        $flee = false;
         foreach ($this->getWorld()->getEntities() as $entity) {
             if ($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Cat || $entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Ocelot) {
-                $dist = $this->location->distanceSquared($entity->getLocation());
-                if ($dist < $minFleeDist) {
-                    $minFleeDist = $dist;
-                    $fleeFrom = $entity;
+                if ($this->location->distanceSquared($entity->getLocation()) < 36.0) {
+                    $flee = true;
+                    break;
                 }
             }
         }
 
-        if ($fleeFrom !== null) {
-
+        if ($flee) {
             if ($this->fuse > 0) {
                 $this->fuse--;
                 if ($this->fuse === 0) {
                     $this->getNetworkProperties()->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::IGNITED, false);
                 }
             }
-
-            $catPos = $fleeFrom->getLocation();
-            $dir = $this->location->subtract($catPos->x, $catPos->y, $catPos->z);
-            if ($dir->lengthSquared() > 0) {
-                $dir = $dir->normalize();
-            } else {
-                $dir = new \pocketmine\math\Vector3(1, 0, 0);
-            }
-
-            $this->targetPosition = $this->location->add($dir->multiply(8.0));
-            return;
+            return $hasUpdate;
         }
 
-        parent::calculateAI();
+        $targetPlayer = null;
+        $nearestDist = 16.0;
+        foreach ($this->getWorld()->getPlayers() as $player) {
+            if ($player->isAlive() && !$player->isCreative() && !$player->isSpectator()) {
+                $dist = $this->location->distanceSquared($player->getLocation());
+                if ($dist < $nearestDist) {
+                    $nearestDist = $dist;
+                    $targetPlayer = $player;
+                }
+            }
+        }
 
-        if ($this->targetPosition !== null && $this->location->distanceSquared($this->targetPosition) < 16) {
+        if ($targetPlayer !== null) {
             if ($this->fuse === 0) {
                 $this->getNetworkProperties()->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::IGNITED, true);
             }
             $this->fuse++;
-
             $this->getWorld()->addParticle($this->getLocation()->add(0, 1, 0), new \pocketmine\world\particle\LavaParticle());
 
             if ($this->fuse >= 30) {
@@ -83,5 +82,37 @@ class Creeper extends \BeeAZ\AZVanillaMobs\entity\Monster {
                 }
             }
         }
+
+        return $hasUpdate;
+    }
+
+    protected function calculateAI(): void {
+        $fleeFrom = null;
+        $minFleeDist = 36.0;
+
+        foreach ($this->getWorld()->getEntities() as $entity) {
+            if ($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Cat || $entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Ocelot) {
+                $dist = $this->location->distanceSquared($entity->getLocation());
+                if ($dist < $minFleeDist) {
+                    $minFleeDist = $dist;
+                    $fleeFrom = $entity;
+                }
+            }
+        }
+
+        if ($fleeFrom !== null) {
+            $catPos = $fleeFrom->getLocation();
+            $dir = $this->location->subtract($catPos->x, $catPos->y, $catPos->z);
+            if ($dir->lengthSquared() > 0) {
+                $dir = $dir->normalize();
+            } else {
+                $dir = new \pocketmine\math\Vector3(1, 0, 0);
+            }
+
+            $this->targetPosition = $this->location->add($dir->multiply(8.0));
+            return;
+        }
+
+        parent::calculateAI();
     }
 }
