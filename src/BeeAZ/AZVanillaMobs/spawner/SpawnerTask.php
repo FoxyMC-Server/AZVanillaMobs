@@ -116,8 +116,8 @@ class SpawnerTask extends Task
             $category = 'nether';
 
             $spawnY = null;
-            for ($attempt = 0; $attempt < 5; $attempt++) {
-                $tryY = mt_rand(25, 115);
+            $startY = mt_rand(35, 95);
+            for ($tryY = $startY; $tryY >= 28; $tryY--) {
                 $blockAtY = $world->getBlockAt($x, $tryY, $z);
                 $blockAbove = $world->getBlockAt($x, $tryY + 1, $z);
                 $blockBelow = $world->getBlockAt($x, $tryY - 1, $z);
@@ -127,6 +127,20 @@ class SpawnerTask extends Task
                     $blockBelow->isSolid() && !($blockBelow instanceof \pocketmine\block\Lava)) {
                     $spawnY = $tryY;
                     break;
+                }
+            }
+            if ($spawnY === null) {
+                for ($tryY = $startY + 1; $tryY <= 105; $tryY++) {
+                    $blockAtY = $world->getBlockAt($x, $tryY, $z);
+                    $blockAbove = $world->getBlockAt($x, $tryY + 1, $z);
+                    $blockBelow = $world->getBlockAt($x, $tryY - 1, $z);
+                    
+                    if ($blockAtY->isTransparent() && !($blockAtY instanceof \pocketmine\block\Lava) &&
+                        $blockAbove->isTransparent() && !($blockAbove instanceof \pocketmine\block\Lava) &&
+                        $blockBelow->isSolid() && !($blockBelow instanceof \pocketmine\block\Lava)) {
+                        $spawnY = $tryY;
+                        break;
+                    }
                 }
             }
             
@@ -301,6 +315,52 @@ class SpawnerTask extends Task
 
             if (empty($filteredList)) return;
             $class = $filteredList[array_rand($filteredList)];
+
+            if ($class === \BeeAZ\AZVanillaMobs\entity\nether\Ghast::class) {
+                $valid = true;
+                for ($dx = -1; $dx <= 2; $dx++) {
+                    for ($dy = 0; $dy <= 3; $dy++) {
+                        for ($dz = -1; $dz <= 2; $dz++) {
+                            $checkBlock = $world->getBlockAt($x + $dx, $spawnY + $dy, $z + $dz);
+                            if (!$checkBlock->isTransparent() || $checkBlock instanceof \pocketmine\block\Lava) {
+                                $valid = false;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+                if (!$valid) {
+                    $filteredWithoutGhast = array_filter($filteredList, fn($c) => $c !== \BeeAZ\AZVanillaMobs\entity\nether\Ghast::class);
+                    if (!empty($filteredWithoutGhast)) {
+                        $class = $filteredWithoutGhast[array_rand($filteredWithoutGhast)];
+                    } else {
+                        return;
+                    }
+                }
+            }
+
+            $height = 2;
+            if (strpos($class, 'Enderman') !== false) {
+                $height = 3;
+            }
+            if ($height > 2) {
+                $valid = true;
+                for ($h = 2; $h < $height; $h++) {
+                    $checkBlock = $world->getBlockAt($x, $spawnY + $h, $z);
+                    if (!$checkBlock->isTransparent() || $checkBlock instanceof \pocketmine\block\Lava) {
+                        $valid = false;
+                        break;
+                    }
+                }
+                if (!$valid) {
+                    $filteredShort = array_filter($filteredList, fn($c) => strpos($c, 'Enderman') === false && $c !== \BeeAZ\AZVanillaMobs\entity\nether\Ghast::class);
+                    if (!empty($filteredShort)) {
+                        $class = $filteredShort[array_rand($filteredShort)];
+                    } else {
+                        return;
+                    }
+                }
+            }
 
             $parts = explode('\\', $class);
             $entityName = strtolower(array_pop($parts));
