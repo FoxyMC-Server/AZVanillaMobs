@@ -91,7 +91,7 @@ abstract class Monster extends BaseMob {
         }
 
         $nearest = null;
-        $minDist = 256;
+        $minDist = 1600;
 
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
@@ -104,6 +104,7 @@ abstract class Monster extends BaseMob {
         }
 
         if ($nearest !== null) {
+            $this->targetEntity = $nearest;
             $this->targetPosition = clone $nearest->getLocation();
 
             if ($minDist < 2.5 && $this->attackDelay <= 0) {
@@ -138,6 +139,7 @@ abstract class Monster extends BaseMob {
                 $this->attackDelay = 20;
             }
         } else {
+            $this->targetEntity = null;
 
             if ($this->targetPosition === null || mt_rand(1, 100) <= 10) {
                 if ($this->isFlying() || $this->isSwimming()) {

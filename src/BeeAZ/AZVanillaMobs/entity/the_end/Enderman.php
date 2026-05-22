@@ -127,7 +127,7 @@ class Enderman extends Monster {
         }
 
         $nearest = null;
-        $minDist = 256;
+        $minDist = 1600;
 
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
@@ -140,6 +140,7 @@ class Enderman extends Monster {
         }
 
         if ($nearest !== null) {
+            $this->targetEntity = $nearest;
             $playerPos = $nearest->getLocation();
             $blockAbove = $this->getWorld()->getBlock($playerPos->add(0, 2, 0));
 
@@ -157,6 +158,7 @@ class Enderman extends Monster {
                 }
             }
         } else {
+            $this->targetEntity = null;
             if ($this->targetPosition === null || mt_rand(1, 100) <= 10) {
                 $randX = mt_rand(-12, 12);
                 $randZ = mt_rand(-12, 12);

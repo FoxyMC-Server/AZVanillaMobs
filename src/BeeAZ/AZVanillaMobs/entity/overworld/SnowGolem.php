@@ -28,7 +28,7 @@ class SnowGolem extends Animal {
     protected function calculateAI(): void {
         
         $nearest = null;
-        $minDist = 144.0; 
+        $minDist = 1024.0; 
 
         foreach ($this->getWorld()->getEntities() as $entity) {
             if ($entity instanceof Monster && $entity->isAlive()) {

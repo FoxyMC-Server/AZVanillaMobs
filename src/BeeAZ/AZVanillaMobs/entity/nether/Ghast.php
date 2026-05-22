@@ -33,7 +33,7 @@ class Ghast extends Monster {
         }
 
         $nearest = null;
-        $minDist = 1024;
+        $minDist = 4096;
 
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
@@ -62,7 +62,7 @@ class Ghast extends Monster {
             }
             $this->lookAt($nearest->getLocation());
 
-            if ($minDist < 1024 && $this->attackDelay <= 0) {
+            if ($minDist < 4096 && $this->attackDelay <= 0) {
                 if ($this->chargeTicks === 0) {
                     $this->chargeTicks = 30;
                     $this->getNetworkProperties()->setGenericFlag(EntityMetadataFlags::ACTION, true);
@@ -115,7 +115,7 @@ class Ghast extends Monster {
                 $this->getNetworkProperties()->setGenericFlag(EntityMetadataFlags::ACTION, false);
 
                 $nearest = null;
-                $minDist = 1024;
+                $minDist = 4096;
                 foreach ($this->getWorld()->getPlayers() as $player) {
                     if ($player->isCreative() || $player->isSpectator()) continue;
                     $dist = $this->location->distanceSquared($player->getLocation());
@@ -125,7 +125,7 @@ class Ghast extends Monster {
                     }
                 }
 
-                if ($nearest !== null && $minDist < 1024) {
+                if ($nearest !== null && $minDist < 4096) {
                     $this->shootFireball($nearest);
                 }
                 $this->attackDelay = 60;

@@ -11,20 +11,37 @@ use pocketmine\item\VanillaItems;
 use pocketmine\world\particle\HeartParticle;
 use pocketmine\entity\EntitySizeInfo;
 
-abstract class Animal extends BaseMob {
+abstract class Animal extends BaseMob
+{
     public int $inLoveTicks = 0;
     public int $age = 0;
     public int $panicTicks = 0;
 
-    protected function getBreedingItem(): Item {
+    public function __construct(\pocketmine\entity\Location $location, ?\pocketmine\nbt\tag\CompoundTag $nbt = null)
+    {
+        parent::__construct($location, $nbt);
+        if ($nbt !== null) {
+            $this->inLoveTicks = $nbt->getInt("InLove", 0);
+            $this->age = $nbt->getInt("Age", 0);
+        } else {
+            $this->inLoveTicks = 0;
+            $this->age = 0;
+        }
+        $this->panicTicks = 0;
+    }
+
+    protected function getBreedingItem(): Item
+    {
         return VanillaItems::WHEAT();
     }
 
-    public function isBreedingItem(Item $item): bool {
+    public function isBreedingItem(Item $item): bool
+    {
         return $item->getTypeId() === $this->getBreedingItem()->getTypeId();
     }
 
-    public function onUpdate(int $currentTick): bool {
+    public function onUpdate(int $currentTick): bool
+    {
         if ($this->inLoveTicks > 0) $this->inLoveTicks--;
         if ($this->panicTicks > 0) $this->panicTicks--;
         if ($this->age < 0) {
@@ -38,7 +55,20 @@ abstract class Animal extends BaseMob {
         return parent::onUpdate($currentTick);
     }
 
-    public function attack(\pocketmine\event\entity\EntityDamageEvent $source): void {
+    protected function getAIUpdateInterval(): int {
+        $tps = \pocketmine\Server::getInstance()->getTicksPerSecond();
+        
+        if ($tps < 12) {
+            return 30;
+        } elseif ($tps < 15) {
+            return 20;
+        }
+        
+        return 10;
+    }
+
+    public function attack(\pocketmine\event\entity\EntityDamageEvent $source): void
+    {
         parent::attack($source);
         if (!$source->isCancelled()) {
             $this->panicTicks = 100;
@@ -50,7 +80,8 @@ abstract class Animal extends BaseMob {
         }
     }
 
-    public function onInteract(Player $player, Vector3 $clickPos): bool {
+    public function onInteract(Player $player, Vector3 $clickPos): bool
+    {
         $item = $player->getInventory()->getItemInHand();
 
         if ($this->age === 0 && $this->inLoveTicks <= 0 && $this->isBreedingItem($item)) {
@@ -79,7 +110,8 @@ abstract class Animal extends BaseMob {
         return parent::onInteract($player, $clickPos);
     }
 
-    protected function calculateAI(): void {
+    protected function calculateAI(): void
+    {
 
         if ($this->isSwimming()) {
             if ($this->targetPosition === null || mt_rand(1, 100) <= 15) {
@@ -138,7 +170,7 @@ abstract class Animal extends BaseMob {
         if ($this->inLoveTicks > 0 && $this->age === 0) {
 
             foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(8, 4, 8)) as $entity) {
-                if ($entity !== $this && get_class($entity) === static::class) {
+                if ($entity !== $this && $entity instanceof self && get_class($entity) === static::class) {
 
                     if ($entity->inLoveTicks > 0 && $entity->age === 0) {
                         $this->targetPosition = $entity->getPosition();
@@ -215,7 +247,8 @@ abstract class Animal extends BaseMob {
         }
     }
 
-    public function getXpDropAmount(): int {
+    public function getXpDropAmount(): int
+    {
         return $this->age < 0 ? 0 : mt_rand(1, 3);
     }
 }

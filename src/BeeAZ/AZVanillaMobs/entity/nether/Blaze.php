@@ -72,7 +72,7 @@ class Blaze extends Monster {
 
     private function getTargetPlayer(): ?Player {
         $nearest = null;
-        $minDist = 256;
+        $minDist = 1600;
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
 
@@ -92,21 +92,14 @@ class Blaze extends Monster {
 
         $nearest = $this->getTargetPlayer();
         if ($nearest !== null) {
+            $this->targetEntity = $nearest;
             $this->lookAt($nearest->getLocation());
-
-            if ($this->chargeTicks > 0 || $this->shootTicks > 0) {
-
-                $this->targetPosition = null;
-                $this->motion->x = 0;
-                $this->motion->z = 0;
-                return;
-            }
 
             if ($this->targetPosition === null || $this->location->distanceSquared($this->targetPosition) < 9 || mt_rand(1, 100) <= 15) {
                 $playerPos = $nearest->getLocation();
                 $randX = $playerPos->x + mt_rand(-8, 8);
                 $randZ = $playerPos->z + mt_rand(-8, 8);
-                $targetY = $playerPos->y + mt_rand(2, 5);
+                $targetY = $playerPos->y + (mt_rand(0, 15) / 10);
 
                 $newPos = new Vector3($randX, $targetY, $randZ);
                 if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
@@ -116,10 +109,12 @@ class Blaze extends Monster {
 
             if ($this->attackDelay <= 0) {
                 $this->chargeTicks = 30;
+                $this->attackDelay = 40;
                 $this->getNetworkProperties()->setGenericFlag(EntityMetadataFlags::ACTION, true);
                 $this->getWorld()->addSound($this->location, new \pocketmine\world\sound\BlazeShootSound());
             }
         } else {
+            $this->targetEntity = null;
 
             if ($this->chargeTicks > 0 || $this->shootTicks > 0) {
                 $this->chargeTicks = 0;
@@ -138,7 +133,7 @@ class Blaze extends Monster {
                 if ($this->getWorld()->isChunkGenerated($chunkX, $chunkZ)) {
                     $highestBlockY = $this->getWorld()->getHighestBlockAt((int)floor($newPos->x), (int)floor($newPos->z));
                     if ($highestBlockY !== null) {
-                        $targetY = max($highestBlockY + 1.5, min($highestBlockY + 8, $newPos->y));
+                        $targetY = max($highestBlockY + 0.5, min($highestBlockY + 2.0, $newPos->y));
                         $newPos->y = $targetY;
                     }
                     if (!$this->getWorld()->getBlock($newPos)->isSolid()) {
@@ -151,10 +146,10 @@ class Blaze extends Monster {
 
     private function shootFireball(Player $target): void {
         $location = $this->getLocation();
-        $spawnPos = $location->add(0, 1.2, 0)->add($this->getDirectionVector()->multiply(0.5));
+        $spawnPos = $location->add(0, 1.2, 0)->addVector($this->getDirectionVector()->multiply(0.5));
 
         $targetPos = $target->getLocation()->add(0, $target->getEyeHeight(), 0);
-        $direction = $targetPos->subtract($spawnPos)->normalize();
+        $direction = $targetPos->subtractVector($spawnPos)->normalize();
 
         $direction->x += (mt_rand(-10, 10) / 150);
         $direction->y += (mt_rand(-10, 10) / 150);

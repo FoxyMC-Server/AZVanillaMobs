@@ -20,7 +20,7 @@ class Witch extends Monster {
         parent::calculateAI();
 
         $nearest = null;
-        $minDist = 144;
+        $minDist = 1024;
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
             $dist = $this->location->distanceSquared($player->getLocation());

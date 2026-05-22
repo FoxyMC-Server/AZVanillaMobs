@@ -38,7 +38,7 @@ class Phantom extends Monster {
 
     protected function calculateAI(): void {
         $nearest = null;
-        $minDist = 400; 
+        $minDist = 1600; 
 
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) {

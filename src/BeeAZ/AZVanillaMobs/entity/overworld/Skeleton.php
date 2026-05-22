@@ -43,7 +43,7 @@ class Skeleton extends Monster {
         }
 
         $nearest = null;
-        $minDist = 256;
+        $minDist = 1600;
 
         foreach ($this->getWorld()->getPlayers() as $player) {
             if ($player->isCreative() || $player->isSpectator()) continue;
@@ -56,6 +56,7 @@ class Skeleton extends Monster {
         }
 
         if ($nearest !== null) {
+            $this->targetEntity = $nearest;
             if ($minDist > 64) {
                 $this->targetPosition = clone $nearest->getLocation();
             } else {
@@ -71,6 +72,7 @@ class Skeleton extends Monster {
                 }
             }
         } else {
+            $this->targetEntity = null;
 
             if ($this->bowChargeTicks > 0) {
                 $this->bowChargeTicks = 0;
@@ -98,7 +100,7 @@ class Skeleton extends Monster {
                 $this->getNetworkProperties()->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::FACING_TARGET_TO_RANGE_ATTACK, false);
 
                 $nearest = null;
-                $minDist = 256;
+                $minDist = 1600;
                 foreach ($this->getWorld()->getPlayers() as $player) {
                     if ($player->isCreative() || $player->isSpectator()) continue;
                     $dist = $this->location->distanceSquared($player->getLocation());

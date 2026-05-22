@@ -9,6 +9,9 @@ use pocketmine\event\entity\EntitySpawnEvent;
 use pocketmine\event\player\PlayerEntityInteractEvent;
 use pocketmine\event\player\PlayerToggleSneakEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\event\server\DataPacketSendEvent;
+use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelEvent;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
@@ -26,19 +29,31 @@ use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\VanillaBlocks;
 use BeeAZ\AZVanillaMobs\entity\overworld\Wolf;
+use BeeAZ\AZVanillaMobs\entity\overworld\Cow;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\player\Player;
+use pocketmine\item\VanillaItems;
 
-class EventListener implements Listener {
+class EventListener implements Listener
+{
+
+    public static array $rainingWorlds = [];
+
+    public static function isWorldRaining(\pocketmine\world\World $world): bool
+    {
+        return isset(self::$rainingWorlds[$world->getFolderName()]);
+    }
 
     private \BeeAZ\AZVanillaMobs\Main $plugin;
 
-    public function __construct(\BeeAZ\AZVanillaMobs\Main $plugin) {
+    public function __construct(\BeeAZ\AZVanillaMobs\Main $plugin)
+    {
         $this->plugin = $plugin;
     }
 
-    public function onEntitySpawn(EntitySpawnEvent $event): void {
+    public function onEntitySpawn(EntitySpawnEvent $event): void
+    {
         $entity = $event->getEntity();
         if (get_class($entity) === 'pocketmine\entity\Zombie') {
             $location = $entity->getLocation();
@@ -52,7 +67,8 @@ class EventListener implements Listener {
         }
     }
 
-    public function onPlayerInteractEntity(PlayerEntityInteractEvent $event): void {
+    public function onPlayerInteractEntity(PlayerEntityInteractEvent $event): void
+    {
         $player = $event->getPlayer();
         $entity = $event->getEntity();
 
@@ -60,7 +76,13 @@ class EventListener implements Listener {
             $event->cancel();
 
             $item = $player->getInventory()->getItemInHand();
-            $itemName = \pocketmine\world\format\io\GlobalItemDataHandlers::getSerializer()->serializeType($item)->getName();
+            $itemName = "";
+            if (!$item->isNull()) {
+                try {
+                    $itemName = \pocketmine\world\format\io\GlobalItemDataHandlers::getSerializer()->serializeType($item)->getName();
+                } catch (\InvalidArgumentException $e) {
+                }
+            }
 
             if ($itemName === "minecraft:saddle") {
                 if (!$entity->isSaddled()) {
@@ -93,10 +115,36 @@ class EventListener implements Listener {
                 $player->getInventory()->setItemInHand($item);
                 return;
             }
+        } elseif ($entity instanceof Cow) {
+            if (!$entity->canBeMilked()) {
+                $event->cancel();
+                return;
+            }
+
+            $item = $player->getInventory()->getItemInHand();
+            $bucketItem = VanillaItems::BUCKET();
+
+            if ($item->equals($bucketItem, false, false)) {
+                $event->cancel();
+
+                $milkBucket = \pocketmine\item\StringToItemParser::getInstance()->parse("milk_bucket");
+                if ($milkBucket !== null) {
+                    $item->setCount($item->getCount() - 1);
+                    if ($item->getCount() === 0) {
+                        $player->getInventory()->setItemInHand($milkBucket);
+                    } else {
+                        $player->getInventory()->setItemInHand($item);
+                        $player->getInventory()->addItem($milkBucket);
+                    }
+                    $entity->setMilkingCooldown(300);
+                }
+                return;
+            }
         }
     }
 
-    public function onPlayerToggleSneak(PlayerToggleSneakEvent $event): void {
+    public function onPlayerToggleSneak(PlayerToggleSneakEvent $event): void
+    {
         $player = $event->getPlayer();
         if ($event->isSneaking()) {
             foreach ($player->getWorld()->getEntities() as $entity) {
@@ -108,7 +156,8 @@ class EventListener implements Listener {
         }
     }
 
-    public function onDataPacketReceive(DataPacketReceiveEvent $event): void {
+    public function onDataPacketReceive(DataPacketReceiveEvent $event): void
+    {
         $packet = $event->getPacket();
         if ($packet instanceof PlayerAuthInputPacket) {
             $player = $event->getOrigin()->getPlayer();
@@ -156,7 +205,6 @@ class EventListener implements Listener {
                             $property->setAccessible(true);
                             $property->setValue($packet, $eyePosition);
                         } catch (\ReflectionException $e) {
-
                         }
 
                         $moveVecX = $packet->getMoveVecX();
@@ -214,7 +262,31 @@ class EventListener implements Listener {
         }
     }
 
-    public function onBlockBreak(\pocketmine\event\block\BlockBreakEvent $event): void {
+    public function onDataPacketSend(DataPacketSendEvent $event): void
+    {
+        foreach ($event->getPackets() as $packet) {
+            if ($packet instanceof LevelEventPacket) {
+                if ($packet->eventId === LevelEvent::START_RAIN || $packet->eventId === LevelEvent::START_THUNDER) {
+                    foreach ($event->getTargets() as $target) {
+                        $player = $target->getPlayer();
+                        if ($player !== null) {
+                            self::$rainingWorlds[$player->getWorld()->getFolderName()] = true;
+                        }
+                    }
+                } elseif ($packet->eventId === LevelEvent::STOP_RAIN || $packet->eventId === LevelEvent::STOP_THUNDER) {
+                    foreach ($event->getTargets() as $target) {
+                        $player = $target->getPlayer();
+                        if ($player !== null) {
+                            unset(self::$rainingWorlds[$player->getWorld()->getFolderName()]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public function onBlockBreak(\pocketmine\event\block\BlockBreakEvent $event): void
+    {
         $block = $event->getBlock();
         $blockName = strtolower($block->getName());
 
@@ -232,7 +304,8 @@ class EventListener implements Listener {
         }
     }
 
-    public function onBlockPlace(BlockPlaceEvent $event): void {
+    public function onBlockPlace(BlockPlaceEvent $event): void
+    {
         if ($event->isCancelled()) return;
         $block = null;
         foreach ($event->getTransaction()->getBlocks() as [$x, $y, $z, $b]) {
@@ -255,11 +328,13 @@ class EventListener implements Listener {
                     new class($world, $pos) extends \pocketmine\scheduler\Task {
                         private $world;
                         private $pos;
-                        public function __construct($world, $pos) {
+                        public function __construct($world, $pos)
+                        {
                             $this->world = $world;
                             $this->pos = $pos;
                         }
-                        public function onRun() : void {
+                        public function onRun(): void
+                        {
                             $this->world->setBlock($this->pos, VanillaBlocks::AIR());
                             $this->world->setBlock($this->pos->subtract(0, 1, 0), VanillaBlocks::AIR());
                             $this->world->setBlock($this->pos->subtract(0, 2, 0), VanillaBlocks::AIR());
@@ -291,12 +366,14 @@ class EventListener implements Listener {
                             private $world;
                             private $pos;
                             private $isXAligned;
-                            public function __construct($world, $pos, $isXAligned) {
+                            public function __construct($world, $pos, $isXAligned)
+                            {
                                 $this->world = $world;
                                 $this->pos = $pos;
                                 $this->isXAligned = $isXAligned;
                             }
-                            public function onRun() : void {
+                            public function onRun(): void
+                            {
                                 $this->world->setBlock($this->pos, VanillaBlocks::AIR());
                                 $this->world->setBlock($this->pos->subtract(0, 1, 0), VanillaBlocks::AIR());
                                 $this->world->setBlock($this->pos->subtract(0, 2, 0), VanillaBlocks::AIR());
@@ -321,7 +398,8 @@ class EventListener implements Listener {
         }
     }
 
-    public function onEntityDamage(EntityDamageEvent $event): void {
+    public function onEntityDamage(EntityDamageEvent $event): void
+    {
         if ($event->isCancelled()) return;
         if ($event instanceof EntityDamageByEntityEvent) {
             $damager = $event->getDamager();

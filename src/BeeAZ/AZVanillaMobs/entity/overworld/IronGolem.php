@@ -17,7 +17,6 @@ class IronGolem extends BaseMob {
     private int $angerTicks = 0;
     private ?Player $angryTarget = null;
     private int $attackDelay = 0;
-    private ?\pocketmine\entity\Living $targetEntity = null;
 
     public static function getNetworkTypeId(): string {
         return "minecraft:iron_golem";
@@ -71,8 +70,8 @@ class IronGolem extends BaseMob {
         } else {
 
             $nearest = null;
-            $minDist = 256;
-            foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(16, 8, 16)) as $entity) {
+            $minDist = 1024;
+            foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(32, 16, 32)) as $entity) {
                 if ($entity instanceof \BeeAZ\AZVanillaMobs\entity\Monster && $entity->isAlive()) {
                     $dist = $this->location->distanceSquared($entity->getLocation());
                     if ($dist < $minDist) {

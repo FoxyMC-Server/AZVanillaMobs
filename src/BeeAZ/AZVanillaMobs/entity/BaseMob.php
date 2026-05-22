@@ -10,11 +10,14 @@ use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\entity\Location;
 
-abstract class BaseMob extends Living {
+abstract class BaseMob extends Living
+{
     protected int $tickOffset = 0;
     protected ?Vector3 $targetPosition = null;
+    protected ?\pocketmine\entity\Living $targetEntity = null;
 
-    public function __construct(Location $location, ?CompoundTag $nbt = null) {
+    public function __construct(Location $location, ?CompoundTag $nbt = null)
+    {
         $this->tickOffset = mt_rand(0, 20);
         parent::__construct($location, $nbt);
         if ($this->isFlying()) {
@@ -22,7 +25,8 @@ abstract class BaseMob extends Living {
         }
     }
 
-    protected function initEntity(CompoundTag $nbt): void {
+    protected function initEntity(CompoundTag $nbt): void
+    {
         $this->setMaxHealth($this->getDefaultMaxHealth());
         parent::initEntity($nbt);
 
@@ -38,13 +42,15 @@ abstract class BaseMob extends Living {
         }
     }
 
-    public function saveNBT(): CompoundTag {
+    public function saveNBT(): CompoundTag
+    {
         $nbt = parent::saveNBT();
         $nbt->setInt("MaxHealth", $this->getMaxHealth());
         return $nbt;
     }
 
-    public function getDefaultMaxHealth(): int {
+    public function getDefaultMaxHealth(): int
+    {
         $className = static::class;
         $parts = explode('\\', $className);
         $name = strtolower(array_pop($parts));
@@ -124,7 +130,8 @@ abstract class BaseMob extends Living {
         return $healthMap[$name] ?? 20;
     }
 
-    public function getAttackDamage(): float {
+    public function getAttackDamage(): float
+    {
         $className = static::class;
         $parts = explode('\\', $className);
         $name = strtolower(array_pop($parts));
@@ -170,53 +177,80 @@ abstract class BaseMob extends Living {
         return $damageMap[$name] ?? 3.0;
     }
 
-    public function isFlying(): bool {
+    public function isFlying(): bool
+    {
+        return false;
+    }
+    public function isAquatic(): bool
+    {
         return false;
     }
 
-    public function isAquatic(): bool {
-        return false;
-    }
-
-    public function isInsideOfWater(): bool {
+    public function isInsideOfWater(): bool
+    {
         $block = $this->getWorld()->getBlock($this->location);
-        if ($block instanceof \pocketmine\block\Water) {
-            return true;
-        }
+        if ($block instanceof \pocketmine\block\Water) return true;
         $eyeBlock = $this->getWorld()->getBlock($this->location->add(0, $this->getEyeHeight(), 0));
         return $eyeBlock instanceof \pocketmine\block\Water;
     }
 
-    public function canBreathe(): bool {
+    public function canBreathe(): bool
+    {
         if ($this->isAquatic()) {
             return $this->isInsideOfWater() || $this->isUnderwater();
         }
         return parent::canBreathe();
     }
 
-    public function isSwimming(): bool {
+    public function isSwimming(): bool
+    {
         return $this->isAquatic() && $this->isInsideOfWater();
     }
 
-    public function getInitialGravity(): float {
+    public function getInitialGravity(): float
+    {
         return $this->isFlying() ? 0.0 : parent::getInitialGravity();
     }
 
-    protected function getInitialSizeInfo(): EntitySizeInfo {
+    protected function getInitialSizeInfo(): EntitySizeInfo
+    {
         return new EntitySizeInfo(1.8, 0.6);
     }
 
-    public function isUndead(): bool {
+    public function isUndead(): bool
+    {
         return false;
     }
 
-    public function getName(): string {
+    public function getName(): string
+    {
         $path = explode('\\', static::class);
         return array_pop($path);
     }
 
-    public function onUpdate(int $currentTick): bool {
+    public function isSafePosition(Vector3 $pos): bool {
+        if ($this->isFlying() || $this->isSwimming()) {
+            return !$this->getWorld()->getBlock($pos)->isSolid();
+        }
+        
+        $checkPos = $pos->add(0, 0.5, 0);
+        $blockAt = $this->getWorld()->getBlock($checkPos);
+        if ($blockAt->isSolid()) {
+            return false;
+        }
 
+        for ($i = 1; $i <= 3; $i++) {
+            if ($this->getWorld()->getBlock($checkPos->subtract(0, $i, 0))->isSolid()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool $hasPlayerNearby = true;
+
+    public function onUpdate(int $currentTick): bool
+    {
         if ($this->isSwimming()) {
             $this->gravity = 0.0;
         } else {
@@ -229,11 +263,28 @@ abstract class BaseMob extends Living {
             return $hasUpdate;
         }
 
-        if (($currentTick + $this->tickOffset) % 10 === 0) {
-            $this->calculateAI();
+        if (($currentTick + $this->tickOffset) % $this->getAIUpdateInterval() === 0) {
+            $this->hasPlayerNearby = false;
+            foreach ($this->getWorld()->getPlayers() as $player) {
+                if ($this->location->distanceSquared($player->getLocation()) <= 2304) {
+                    $this->hasPlayerNearby = true;
+                    break;
+                }
+            }
+
+            if ($this->hasPlayerNearby) {
+                $this->calculateAI();
+                if ($this->targetPosition !== null && !$this->isSafePosition($this->targetPosition)) {
+                    $this->targetPosition = null;
+                }
+            } else {
+                $this->targetPosition = null;
+                $this->motion->x = 0;
+                $this->motion->z = 0;
+            }
             $hasUpdate = true;
 
-            if ($this->isUndead() && $this->getWorld()->getTimeOfDay() < \pocketmine\world\World::TIME_NIGHT) {
+            if ($this->hasPlayerNearby && $this->isUndead() && $this->getWorld()->getTimeOfDay() < \pocketmine\world\World::TIME_NIGHT) {
                 if (!\BeeAZ\AZVanillaMobs\listener\EventListener::isWorldRaining($this->getWorld())) {
                     $x = $this->location->getFloorX();
                     $z = $this->location->getFloorZ();
@@ -247,19 +298,33 @@ abstract class BaseMob extends Living {
             }
         }
 
-        if ($this->targetPosition !== null) {
-            $this->moveTowardsTarget();
-            $hasUpdate = true;
+        if ($this->hasPlayerNearby) {
+            if ($this->targetEntity !== null && $this->targetEntity->isAlive() && !$this->targetEntity->isClosed()) {
+                if ($this->targetPosition !== null) {
+                    if (!$this->isFlying() && !$this->isSwimming()) {
+                        $this->targetPosition = clone $this->targetEntity->getLocation();
+                    }
+                }
+            }
+
+            if ($this->targetPosition !== null) {
+                $this->moveTowardsTarget();
+                $hasUpdate = true;
+            }
         }
 
         return $hasUpdate;
     }
 
-    protected function calculateAI(): void {
+    protected function calculateAI(): void {}
 
+    protected function getAIUpdateInterval(): int
+    {
+        return 10;
     }
 
-    protected function moveTowardsTarget(): void {
+    protected function moveTowardsTarget(): void
+    {
         if ($this->targetPosition === null) return;
 
         $x = $this->targetPosition->x - $this->location->x;
@@ -284,72 +349,60 @@ abstract class BaseMob extends Living {
 
             $speed = $this->getMovementSpeed();
             $distance = sqrt($distanceSq);
-            $motionX = ($x / $distance) * $speed;
-            $motionY = ($y / $distance) * $speed;
-            $motionZ = ($z / $distance) * $speed;
-
-            $this->motion->x = $motionX;
-            $this->motion->y = $motionY;
-            $this->motion->z = $motionZ;
+            $this->motion->x = ($x / $distance) * $speed;
+            $this->motion->y = ($y / $distance) * $speed;
+            $this->motion->z = ($z / $distance) * $speed;
 
             $yaw = rad2deg(atan2($z, $x)) - 90;
             $pitch = -rad2deg(atan2($y, sqrt($x * $x + $z * $z)));
             $this->setRotation($yaw, $pitch);
-        } else {
-            $distanceSq = $x * $x + $z * $z;
-            if ($distanceSq < 1.0) {
-                $this->targetPosition = null;
-                $this->motion->x = 0;
-                $this->motion->z = 0;
-                return;
+            return;
+        }
+
+        $distanceSq = $x * $x + $z * $z;
+        if ($distanceSq < 1.0 || $distanceSq > 2500) {
+            $this->targetPosition = null;
+            $this->motion->x = 0;
+            $this->motion->z = 0;
+            return;
+        }
+
+        $angle = atan2($z, $x);
+        $speed = $this->getMovementSpeed();
+
+        $this->motion->x = cos($angle) * $speed;
+        $this->motion->z = sin($angle) * $speed;
+
+        $this->setRotation(rad2deg($angle) - 90, 0);
+
+        if ($this->isCollidedHorizontally && $this->onGround) {
+            $direction = $this->getDirectionVector();
+            $horizontalDir = new Vector3($direction->x, 0, $direction->z);
+            if ($horizontalDir->lengthSquared() > 0) {
+                $horizontalDir = $horizontalDir->normalize();
             }
-
-            $speed = $this->getMovementSpeed();
-            $angle = atan2($z, $x);
-
-            $motionX = cos($angle) * $speed;
-            $motionZ = sin($angle) * $speed;
-
-            if ($this->onGround && $this->targetPosition->y >= $this->location->y - 1) {
-                $nextX = $this->location->x + $motionX * 2;
-                $nextZ = $this->location->z + $motionZ * 2;
-                $blockBelowNext = $this->getWorld()->getBlockAt((int)floor($nextX), (int)floor($this->location->y - 0.1), (int)floor($nextZ));
-                if ($blockBelowNext->isTransparent() && $blockBelowNext->getTypeId() === \pocketmine\block\BlockTypeIds::AIR) {
-                    $motionX = 0;
-                    $motionZ = 0;
-                    $this->targetPosition = null;
-                }
-            }
-
-            $this->motion->x = $motionX;
-            $this->motion->z = $motionZ;
-
-            $this->setRotation(rad2deg($angle) - 90, 0);
-
-            if ($this->onGround) {
-
-                $nextX = $this->location->x + cos($angle) * 0.5;
-                $nextZ = $this->location->z + sin($angle) * 0.5;
-
-                $blockInFront = $this->getWorld()->getBlockAt((int)floor($nextX), (int)floor($this->location->y), (int)floor($nextZ));
-                $blockAboveFront = $this->getWorld()->getBlockAt((int)floor($nextX), (int)floor($this->location->y + 1.0), (int)floor($nextZ));
-
-                if ($blockInFront->isSolid() && !$blockAboveFront->isSolid()) {
-                    $this->motion->y = 0.42;
-                }
-            }
-
-            if ($this->isCollidedHorizontally && $this->onGround) {
-                $this->motion->y = 0.42;
+            $frontPos = new Vector3($this->location->x + $horizontalDir->x * 0.6, $this->location->y + 0.5, $this->location->z + $horizontalDir->z * 0.6);
+            $frontBlock = $this->getWorld()->getBlock($frontPos);
+            $frontBlockUpper = $this->getWorld()->getBlock($frontPos->add(0, 1, 0));
+            if ($frontBlock->isSolid() || $frontBlockUpper->isSolid()) {
+                $this->motion->y = $this->getJumpVelocity();
+                $this->motion->x *= 1.5; 
+                $this->motion->z *= 1.5;
             }
         }
     }
 
-    public function getMovementSpeed(): float {
-        return 0.2;
+    public function getJumpVelocity(): float
+    {
+        return 0.52;
     }
 
-    public function getXpDropAmount(): int {
+    public function getMovementSpeed(): float {
+        return 0.23;
+    }
+
+    public function getXpDropAmount(): int
+    {
         return 0;
     }
 }

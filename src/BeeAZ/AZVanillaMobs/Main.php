@@ -240,10 +240,12 @@ class Main extends PluginBase {
         $register(\BeeAZ\AZVanillaMobs\entity\nether\Strider::class, 'Strider', 'minecraft:strider', 'nether');
         $register(\BeeAZ\AZVanillaMobs\entity\the_end\Enderman::class, 'Enderman', 'minecraft:enderman', 'the_end');
         $this->spawnerLists['overworld_hostile'][] = \BeeAZ\AZVanillaMobs\entity\the_end\Enderman::class;
-        $this->spawnerLists['nether'][] = \BeeAZ\AZVanillaMobs\entity\the_end\Enderman::class;
         $register(\BeeAZ\AZVanillaMobs\entity\the_end\Endermite::class, 'Endermite', 'minecraft:endermite', 'the_end');
         $register(\BeeAZ\AZVanillaMobs\entity\the_end\Shulker::class, 'Shulker', 'minecraft:shulker', 'the_end');
-        $register(\BeeAZ\AZVanillaMobs\entity\the_end\EnderDragon::class, 'EnderDragon', 'minecraft:ender_dragon', 'the_end');
+        // EnderDragon được register nhưng không thêm vào spawner list (boss - spawn thủ công)
+        EntityFactory::getInstance()->register(\BeeAZ\AZVanillaMobs\entity\the_end\EnderDragon::class, function(World $world, CompoundTag $nbt) : \pocketmine\entity\Entity {
+            return new \BeeAZ\AZVanillaMobs\entity\the_end\EnderDragon(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ['EnderDragon', 'minecraft:ender_dragon']);
 
         try {
             $saddleId = \pocketmine\item\ItemTypeIds::newId();
