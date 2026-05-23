@@ -105,7 +105,9 @@ class Villager extends Animal {
         parent::initEntity($nbt);
         $this->hostility = $nbt->getInt("Hostility", 0);
 
-        if ($nbt->getTag("Profession") !== null) {
+        if ($this instanceof WanderingTrader) {
+            $this->profession = 99;
+        } elseif ($nbt->getTag("Profession") !== null) {
             $this->profession = $nbt->getInt("Profession");
         } else {
             $this->profession = mt_rand(1, 10) === 1 ? 14 : 0;
@@ -375,12 +377,70 @@ class Villager extends Animal {
 
     public function generateRecipes(): void {
         $this->tradeRecipes = [];
+        if ($this instanceof WanderingTrader) {
+            $pool = $this->getWanderingTraderPool();
+            shuffle($pool);
+            $selectedCount = min(6, count($pool));
+            for ($i = 0; $i < $selectedCount; $i++) {
+                $trade = $pool[$i];
+                $this->tradeRecipes[] = [
+                    'buyA' => $trade['buyA'],
+                    'buyB' => $trade['buyB'] ?? null,
+                    'sell' => $trade['sell'],
+                    'uses' => 0,
+                    'maxUses' => $trade['maxUses'] ?? 12,
+                    'tier' => 1,
+                    'traderExp' => 0,
+                    'rewardExp' => 1,
+                    'priceMultiplierA' => 0.05,
+                    'priceMultiplierB' => 0.05,
+                    'originalCountA' => $trade['buyA']->getCount(),
+                    'originalCountB' => (isset($trade['buyB']) && $trade['buyB'] !== null && !$trade['buyB']->isNull()) ? $trade['buyB']->getCount() : 0,
+                    'demand' => 0,
+                ];
+            }
+            $this->updateRecipesPrice();
+            return;
+        }
+
         if ($this->profession === 0 || $this->profession === 14) return;
 
         for ($tier = 1; $tier <= 5; $tier++) {
             $this->addTradesForTier($tier);
         }
         $this->updateRecipesPrice();
+    }
+
+    protected function getWanderingTraderPool(): array {
+        $pool = [];
+        try {
+            $pool[] = ['buyA' => self::getItem("emerald", 2), 'sell' => self::getItem("sea_pickle", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 4), 'sell' => self::getItem("slime_ball", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 4), 'sell' => self::getItem("glowstone", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("nautilus_shell", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("oak_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("spruce_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("birch_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("jungle_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("acacia_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("dark_oak_sapling", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 6), 'sell' => self::getItem("blue_ice", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("packed_ice", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("podzol", 3)];
+            $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("sand", 8)];
+            $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("red_sand", 8)];
+            $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("gunpowder", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("cactus", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 3), 'sell' => self::getItem("kelp", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 1), 'sell' => self::getItem("lily_pad", 2)];
+            $pool[] = ['buyA' => self::getItem("emerald", 10), 'sell' => self::getItem("diamond", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("netherite_ingot", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 12), 'sell' => self::getItem("golden_apple", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 64), 'sell' => self::getItem("enchanted_golden_apple", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("totem_of_undying", 1)];
+            $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("experience_bottle", 1)];
+        } catch (\Throwable $e) {}
+        return $pool;
     }
 
     private function addTradesForTier(int $tier): void {
@@ -567,6 +627,12 @@ class Villager extends Animal {
                     } elseif ($tier === 5) {
                         $pool[] = ['buyA' => self::getItem("emerald", 8), 'sell' => self::getItem("diamond_boots", 1)];
                         $pool[] = ['buyA' => self::getItem("emerald", 8), 'sell' => self::getItem("diamond_helmet", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 12), 'sell' => self::getItem("diamond_chestplate", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 10), 'sell' => self::getItem("diamond_leggings", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("netherite_boots", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("netherite_helmet", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 48), 'sell' => self::getItem("netherite_chestplate", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 40), 'sell' => self::getItem("netherite_leggings", 1)];
                     }
                     break;
 
@@ -617,6 +683,12 @@ class Villager extends Animal {
                         $pool[] = ['buyA' => self::getItem("diamond", 1), 'sell' => self::getItem("emerald", 1)];
                     } elseif ($tier === 5) {
                         $pool[] = ['buyA' => self::getItem("emerald", 10), 'sell' => self::getItem("diamond_pickaxe", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 8), 'sell' => self::getItem("diamond_axe", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 6), 'sell' => self::getItem("diamond_shovel", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 5), 'sell' => self::getItem("diamond_hoe", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 36), 'sell' => self::getItem("netherite_pickaxe", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("netherite_axe", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 24), 'sell' => self::getItem("netherite_shovel", 1)];
                     }
                     break;
 
@@ -633,6 +705,7 @@ class Villager extends Animal {
                         $pool[] = ['buyA' => self::getItem("diamond", 1), 'sell' => self::getItem("emerald", 1)];
                     } elseif ($tier === 5) {
                         $pool[] = ['buyA' => self::getItem("emerald", 8), 'sell' => self::getItem("diamond_sword", 1)];
+                        $pool[] = ['buyA' => self::getItem("emerald", 32), 'sell' => self::getItem("netherite_sword", 1)];
                     }
                     break;
 

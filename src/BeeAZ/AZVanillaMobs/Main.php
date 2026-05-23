@@ -16,6 +16,8 @@ class Main extends PluginBase {
         $this->getServer()->getPluginManager()->registerEvents(new \BeeAZ\AZVanillaMobs\loot\LootManager(), $this);
         $this->getServer()->getPluginManager()->registerEvents(new \BeeAZ\AZVanillaMobs\listener\EventListener($this), $this);
         $this->getServer()->getPluginManager()->registerEvents(new \BeeAZ\AZVanillaMobs\listener\TradeListener($this), $this);
+        $this->getServer()->getPluginManager()->registerEvents(new \BeeAZ\AZVanillaMobs\listener\LeashListener($this), $this);
+        $this->getServer()->getPluginManager()->registerEvents(new \BeeAZ\AZVanillaMobs\listener\RidingListener($this), $this);
 
         $map = $this->getServer()->getCommandMap();
         $cmd = $map->getCommand("summon");
@@ -25,6 +27,11 @@ class Main extends PluginBase {
 
         $this->registerEntities();
         $this->getScheduler()->scheduleRepeatingTask(new \BeeAZ\AZVanillaMobs\spawner\SpawnerTask($this), 20);
+        $this->getScheduler()->scheduleRepeatingTask(new class($this) extends \pocketmine\scheduler\Task {
+            public function onRun(): void {
+                \BeeAZ\AZVanillaMobs\listener\LeashListener::tickLeashes();
+            }
+        }, 2);
     }
 
     public array $spawnerLists = [
@@ -122,6 +129,7 @@ class Main extends PluginBase {
                 'minecraft:enderman' => 'enderman_spawn_egg',
                 'minecraft:endermite' => 'endermite_spawn_egg',
                 'minecraft:shulker' => 'shulker_spawn_egg',
+                'minecraft:warden' => 'warden_spawn_egg',
             ];
 
             if (!isset($eggMapping[$id])) {
@@ -193,6 +201,7 @@ class Main extends PluginBase {
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Vex::class, 'Vex', 'minecraft:vex', 'overworld_hostile');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Guardian::class, 'Guardian', 'minecraft:guardian', 'overworld_hostile');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\ElderGuardian::class, 'ElderGuardian', 'minecraft:elder_guardian', 'overworld_hostile');
+        $register(\BeeAZ\AZVanillaMobs\entity\overworld\Warden::class, 'Warden', 'minecraft:warden', 'overworld_hostile');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Cow::class, 'Cow', 'minecraft:cow', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Pig::class, 'Pig', 'minecraft:pig', 'overworld_passive');
         $register(\BeeAZ\AZVanillaMobs\entity\overworld\Sheep::class, 'Sheep', 'minecraft:sheep', 'overworld_passive');
@@ -242,7 +251,6 @@ class Main extends PluginBase {
         $this->spawnerLists['overworld_hostile'][] = \BeeAZ\AZVanillaMobs\entity\the_end\Enderman::class;
         $register(\BeeAZ\AZVanillaMobs\entity\the_end\Endermite::class, 'Endermite', 'minecraft:endermite', 'the_end');
         $register(\BeeAZ\AZVanillaMobs\entity\the_end\Shulker::class, 'Shulker', 'minecraft:shulker', 'the_end');
-        // EnderDragon được register nhưng không thêm vào spawner list (boss - spawn thủ công)
         EntityFactory::getInstance()->register(\BeeAZ\AZVanillaMobs\entity\the_end\EnderDragon::class, function(World $world, CompoundTag $nbt) : \pocketmine\entity\Entity {
             return new \BeeAZ\AZVanillaMobs\entity\the_end\EnderDragon(EntityDataHelper::parseLocation($nbt, $world), $nbt);
         }, ['EnderDragon', 'minecraft:ender_dragon']);
@@ -261,6 +269,23 @@ class Main extends PluginBase {
                 \pocketmine\item\StringToItemParser::getInstance()->override("saddle", fn() => clone $saddleItem);
             } else {
                 \pocketmine\item\StringToItemParser::getInstance()->register("saddle", fn() => clone $saddleItem);
+            }
+        } catch (\Exception $e) {}
+
+        try {
+            $leadId = \pocketmine\item\ItemTypeIds::newId();
+            $leadIdentifier = new \pocketmine\item\ItemIdentifier($leadId);
+            $leadItem = new \BeeAZ\AZVanillaMobs\item\Lead($leadIdentifier, "Lead");
+
+            \pocketmine\world\format\io\GlobalItemDataHandlers::getSerializer()->map($leadItem, fn() => new \pocketmine\data\bedrock\item\SavedItemData("minecraft:lead"));
+            \pocketmine\world\format\io\GlobalItemDataHandlers::getDeserializer()->map("minecraft:lead", fn() => clone $leadItem);
+
+            \pocketmine\inventory\CreativeInventory::getInstance()->add($leadItem);
+
+            if (method_exists(\pocketmine\item\StringToItemParser::getInstance(), 'override')) {
+                \pocketmine\item\StringToItemParser::getInstance()->override("lead", fn() => clone $leadItem);
+            } else {
+                \pocketmine\item\StringToItemParser::getInstance()->register("lead", fn() => clone $leadItem);
             }
         } catch (\Exception $e) {}
 

@@ -44,13 +44,22 @@ class BlazeFireball extends Projectile {
             $entity = $event->getEntityHit();
             $shootingEntity = $this->getOwningEntity();
 
-            $ev = new EntityDamageByChildEntityEvent(
-                $shootingEntity,
-                $this,
-                $entity,
-                EntityDamageEvent::CAUSE_PROJECTILE,
-                5.0
-            );
+            if ($shootingEntity !== null) {
+                $ev = new EntityDamageByChildEntityEvent(
+                    $shootingEntity,
+                    $this,
+                    $entity,
+                    EntityDamageEvent::CAUSE_PROJECTILE,
+                    5.0
+                );
+            } else {
+                $ev = new \pocketmine\event\entity\EntityDamageByEntityEvent(
+                    $this,
+                    $entity,
+                    EntityDamageEvent::CAUSE_PROJECTILE,
+                    5.0
+                );
+            }
 
             $entity->attack($ev);
             $entity->setOnFire(5);

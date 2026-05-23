@@ -40,12 +40,31 @@ abstract class BaseMob extends Living
         } else {
             $this->setHealth($this->getMaxHealth());
         }
+
+        $fenceLeashTag = $nbt->getCompoundTag("FenceLeash");
+        if ($fenceLeashTag !== null) {
+            $x = $fenceLeashTag->getInt("X");
+            $y = $fenceLeashTag->getInt("Y");
+            $z = $fenceLeashTag->getInt("Z");
+            $worldName = $fenceLeashTag->getString("World");
+            \BeeAZ\AZVanillaMobs\listener\LeashListener::registerFenceLeash($this, new Vector3($x, $y, $z), $worldName);
+        }
     }
 
     public function saveNBT(): CompoundTag
     {
         $nbt = parent::saveNBT();
         $nbt->setInt("MaxHealth", $this->getMaxHealth());
+
+        if (isset(\BeeAZ\AZVanillaMobs\listener\LeashListener::$fenceLeashedEntities[$this->getId()])) {
+            $fenceData = \BeeAZ\AZVanillaMobs\listener\LeashListener::$fenceLeashedEntities[$this->getId()];
+            $leashNBT = CompoundTag::create()
+                ->setInt("X", (int)$fenceData['pos']->x)
+                ->setInt("Y", (int)$fenceData['pos']->y)
+                ->setInt("Z", (int)$fenceData['pos']->z)
+                ->setString("World", $fenceData['world']);
+            $nbt->setTag("FenceLeash", $leashNBT);
+        }
         return $nbt;
     }
 
@@ -79,6 +98,7 @@ abstract class BaseMob extends Living
             'wanderingtrader' => 20,
             'irongolem' => 100,
             'snowgolem' => 4,
+            'warden' => 500,
             'axolotl' => 14,
             'goat' => 20,
             'frog' => 10,
@@ -172,6 +192,7 @@ abstract class BaseMob extends Living
             'enderdragon' => 10.0,
             'irongolem' => 15.0,
             'wolf' => 4.0,
+            'warden' => 30.0,
         ];
 
         return $damageMap[$name] ?? 3.0;
@@ -272,12 +293,14 @@ abstract class BaseMob extends Living
                 }
             }
 
-            if ($this->hasPlayerNearby) {
+            $isLeashed = \BeeAZ\AZVanillaMobs\listener\LeashListener::getLeashHolder($this) !== null;
+
+            if ($this->hasPlayerNearby && !$isLeashed) {
                 $this->calculateAI();
                 if ($this->targetPosition !== null && !$this->isSafePosition($this->targetPosition)) {
                     $this->targetPosition = null;
                 }
-            } else {
+            } elseif (!$isLeashed) {
                 $this->targetPosition = null;
                 $this->motion->x = 0;
                 $this->motion->z = 0;
@@ -309,6 +332,45 @@ abstract class BaseMob extends Living
 
             if ($this->targetPosition !== null) {
                 $this->moveTowardsTarget();
+                $hasUpdate = true;
+            }
+        }
+
+        $holderPos = \BeeAZ\AZVanillaMobs\listener\LeashListener::getLeashHolder($this);
+        if ($holderPos !== null) {
+            $this->targetPosition = null;
+            $dist = $this->location->distance($holderPos);
+            if ($dist > 5.0) {
+                $dir = $holderPos->subtractVector($this->location);
+                $motionY = $this->motion->y;
+                if ($dir->y > 0) {
+                    $motionY = $dir->y / max($dist, 1.0) * 0.4;
+                }
+                $dir->y = 0;
+                if ($dir->lengthSquared() > 0) {
+                    $dir = $dir->normalize();
+                }
+                $speed = min(0.45, $dist * 0.06);
+                $this->setMotion(new Vector3($dir->x * $speed, $motionY, $dir->z * $speed));
+                if ($this->isCollidedHorizontally) {
+                    $this->motion->y = max($this->motion->y, 0.42);
+                }
+                $yaw = rad2deg(atan2($dir->z, $dir->x)) - 90;
+                $this->setRotation($yaw, 0);
+                $hasUpdate = true;
+            } elseif ($dist > 2.0) {
+                $dir = $holderPos->subtractVector($this->location);
+                $dir->y = 0;
+                if ($dir->lengthSquared() > 0) {
+                    $dir = $dir->normalize();
+                }
+                $speed = $this->getMovementSpeed();
+                $this->setMotion(new Vector3($dir->x * $speed, $this->motion->y, $dir->z * $speed));
+                if ($this->isCollidedHorizontally && $this->onGround) {
+                    $this->motion->y = $this->getJumpVelocity();
+                }
+                $yaw = rad2deg(atan2($dir->z, $dir->x)) - 90;
+                $this->setRotation($yaw, 0);
                 $hasUpdate = true;
             }
         }
@@ -381,7 +443,9 @@ abstract class BaseMob extends Living
             if ($horizontalDir->lengthSquared() > 0) {
                 $horizontalDir = $horizontalDir->normalize();
             }
-            $frontPos = new Vector3($this->location->x + $horizontalDir->x * 0.6, $this->location->y + 0.5, $this->location->z + $horizontalDir->z * 0.6);
+            $width = $this->size !== null ? $this->size->getWidth() : 0.6;
+            $offsetDist = ($width / 2.0) + 0.35;
+            $frontPos = new Vector3($this->location->x + $horizontalDir->x * $offsetDist, $this->location->y + 0.5, $this->location->z + $horizontalDir->z * $offsetDist);
             $frontBlock = $this->getWorld()->getBlock($frontPos);
             $frontBlockUpper = $this->getWorld()->getBlock($frontPos->add(0, 1, 0));
             if ($frontBlock->isSolid() || $frontBlockUpper->isSolid()) {
@@ -405,4 +469,28 @@ abstract class BaseMob extends Living
     {
         return 0;
     }
+
+    protected function syncNetworkData(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection $properties) : void
+    {
+        parent::syncNetworkData($properties);
+
+        $holderId = -1;
+        $entityId = $this->getId();
+        if (isset(\BeeAZ\AZVanillaMobs\listener\LeashListener::$leashedEntities[$entityId])) {
+            $holderId = \BeeAZ\AZVanillaMobs\listener\LeashListener::$leashedEntities[$entityId];
+        } elseif (isset(\BeeAZ\AZVanillaMobs\listener\LeashListener::$fenceLeashedEntities[$entityId])) {
+            $holderId = \BeeAZ\AZVanillaMobs\listener\LeashListener::$fenceLeashedEntities[$entityId]['knotId'];
+        } elseif (isset(\BeeAZ\AZVanillaMobs\listener\LeashListener::$entityLeashedEntities[$entityId])) {
+            $holderId = \BeeAZ\AZVanillaMobs\listener\LeashListener::$entityLeashedEntities[$entityId];
+        }
+
+        if ($holderId !== -1) {
+            $properties->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::LEASHED, true);
+            $properties->setLong(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties::LEAD_HOLDER_EID, $holderId);
+        } else {
+            $properties->setGenericFlag(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags::LEASHED, false);
+            $properties->setLong(\pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties::LEAD_HOLDER_EID, -1);
+        }
+    }
 }
+

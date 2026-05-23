@@ -54,10 +54,12 @@ class TradeListener implements Listener {
         if ($entity instanceof Villager) {
             $event->cancel();
 
-            if ($entity->getProfession() === 0 || $entity->getProfession() === 14) {
-                $entity->playVillagerSound("mob.villager.no", 1.0, 1.0);
-                $entity->getWorld()->addParticle($entity->getLocation()->add(0, 1.5, 0), new AngryVillagerParticle());
-                return;
+            if (!($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\WanderingTrader)) {
+                if ($entity->getProfession() === 0 || $entity->getProfession() === 14) {
+                    $entity->playVillagerSound("mob.villager.no", 1.0, 1.0);
+                    $entity->getWorld()->addParticle($entity->getLocation()->add(0, 1.5, 0), new AngryVillagerParticle());
+                    return;
+                }
             }
 
             self::openTrade($player, $entity);

@@ -103,6 +103,16 @@ abstract class Monster extends BaseMob {
             }
         }
 
+        foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(20, 10, 20)) as $entity) {
+            if (($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\IronGolem || $entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\SnowGolem) && $entity->isAlive() && !$entity->isClosed()) {
+                $dist = $this->location->distanceSquared($entity->getLocation());
+                if ($dist < $minDist) {
+                    $minDist = $dist;
+                    $nearest = $entity;
+                }
+            }
+        }
+
         if ($nearest !== null) {
             $this->targetEntity = $nearest;
             $this->targetPosition = clone $nearest->getLocation();
@@ -111,24 +121,26 @@ abstract class Monster extends BaseMob {
                 $ev = new EntityDamageByEntityEvent($this, $nearest, EntityDamageEvent::CAUSE_ENTITY_ATTACK, $this->getAttackDamage());
                 $nearest->attack($ev);
 
-                if ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\CaveSpider) {
-                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
-                        \pocketmine\entity\effect\VanillaEffects::POISON(),
-                        100, 
-                        0
-                    ));
-                } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\nether\WitherSkeleton) {
-                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
-                        \pocketmine\entity\effect\VanillaEffects::WITHER(),
-                        200, 
-                        0
-                    ));
-                } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Husk) {
-                    $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
-                        \pocketmine\entity\effect\VanillaEffects::HUNGER(),
-                        140, 
-                        0
-                    ));
+                if ($nearest instanceof Player) {
+                    if ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\CaveSpider) {
+                        $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                            \pocketmine\entity\effect\VanillaEffects::POISON(),
+                            100, 
+                            0
+                        ));
+                    } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\nether\WitherSkeleton) {
+                        $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                            \pocketmine\entity\effect\VanillaEffects::WITHER(),
+                            200, 
+                            0
+                        ));
+                    } elseif ($this instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Husk) {
+                        $nearest->getEffects()->add(new \pocketmine\entity\effect\EffectInstance(
+                            \pocketmine\entity\effect\VanillaEffects::HUNGER(),
+                            140, 
+                            0
+                        ));
+                    }
                 }
 
                 $pk = new \pocketmine\network\mcpe\protocol\AnimatePacket();

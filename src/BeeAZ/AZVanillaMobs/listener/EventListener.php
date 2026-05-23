@@ -4,52 +4,43 @@ declare(strict_types=1);
 
 namespace BeeAZ\AZVanillaMobs\listener;
 
-use pocketmine\event\Listener;
-use pocketmine\event\entity\EntitySpawnEvent;
-use pocketmine\event\player\PlayerEntityInteractEvent;
-use pocketmine\event\player\PlayerToggleSneakEvent;
-use pocketmine\event\server\DataPacketReceiveEvent;
-use pocketmine\event\server\DataPacketSendEvent;
-use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\LevelEvent;
-use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
-use pocketmine\network\mcpe\protocol\InteractPacket;
-use pocketmine\network\mcpe\protocol\MovePlayerPacket;
-use pocketmine\network\mcpe\protocol\types\PlayerAuthInputFlags;
-use pocketmine\world\particle\HeartParticle;
+use BeeAZ\AZVanillaMobs\Main;
 use BeeAZ\AZVanillaMobs\entity\overworld\Zombie;
-use BeeAZ\AZVanillaMobs\entity\overworld\Horse;
-use BeeAZ\AZVanillaMobs\entity\overworld\Donkey;
-use BeeAZ\AZVanillaMobs\entity\overworld\Mule;
-use BeeAZ\AZVanillaMobs\entity\overworld\Camel;
-use BeeAZ\AZVanillaMobs\entity\overworld\Panda;
 use BeeAZ\AZVanillaMobs\entity\overworld\SnowGolem;
 use BeeAZ\AZVanillaMobs\entity\overworld\IronGolem;
-use pocketmine\event\block\BlockPlaceEvent;
+use BeeAZ\AZVanillaMobs\entity\overworld\Wolf;
+use BeeAZ\AZVanillaMobs\entity\overworld\Bee;
+use pocketmine\world\World;
+use pocketmine\math\Vector3;
+use pocketmine\entity\Living;
+use pocketmine\entity\Location;
+use pocketmine\player\Player;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\VanillaBlocks;
-use BeeAZ\AZVanillaMobs\entity\overworld\Wolf;
-use BeeAZ\AZVanillaMobs\entity\overworld\Cow;
+use pocketmine\event\Listener;
+use pocketmine\event\entity\EntitySpawnEvent;
+use pocketmine\event\server\DataPacketSendEvent;
+use pocketmine\event\block\BlockPlaceEvent;
+use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
-use pocketmine\player\Player;
-use pocketmine\item\VanillaItems;
+use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelEvent;
+use pocketmine\scheduler\Task;
 
 class EventListener implements Listener
 {
-
     public static array $rainingWorlds = [];
+    private Main $plugin;
 
-    public static function isWorldRaining(\pocketmine\world\World $world): bool
-    {
-        return isset(self::$rainingWorlds[$world->getFolderName()]);
-    }
-
-    private \BeeAZ\AZVanillaMobs\Main $plugin;
-
-    public function __construct(\BeeAZ\AZVanillaMobs\Main $plugin)
+    public function __construct(Main $plugin)
     {
         $this->plugin = $plugin;
+    }
+
+    public static function isWorldRaining(World $world): bool
+    {
+        return isset(self::$rainingWorlds[$world->getFolderName()]);
     }
 
     public function onEntitySpawn(EntitySpawnEvent $event): void
@@ -58,207 +49,10 @@ class EventListener implements Listener
         if (get_class($entity) === 'pocketmine\entity\Zombie') {
             $location = $entity->getLocation();
             $newZombie = new Zombie($location);
-
             $newZombie->setHealth($entity->getHealth());
             $newZombie->setMaxHealth($entity->getMaxHealth());
-
             $entity->close();
             $newZombie->spawnToAll();
-        }
-    }
-
-    public function onPlayerInteractEntity(PlayerEntityInteractEvent $event): void
-    {
-        $player = $event->getPlayer();
-        $entity = $event->getEntity();
-
-        if ($entity instanceof Horse || $entity instanceof Donkey || $entity instanceof Mule || $entity instanceof Camel) {
-            $event->cancel();
-
-            $item = $player->getInventory()->getItemInHand();
-            $itemName = "";
-            if (!$item->isNull()) {
-                try {
-                    $itemName = \pocketmine\world\format\io\GlobalItemDataHandlers::getSerializer()->serializeType($item)->getName();
-                } catch (\InvalidArgumentException $e) {
-                }
-            }
-
-            if ($itemName === "minecraft:saddle") {
-                if (!$entity->isSaddled()) {
-                    $entity->setSaddled(true);
-                    $item->setCount($item->getCount() - 1);
-                    $player->getInventory()->setItemInHand($item);
-                    return;
-                }
-            }
-
-            if ($entity->isSaddled()) {
-                $entity->mountPlayer($player);
-            }
-        } elseif ($entity instanceof Panda) {
-            $item = $player->getInventory()->getItemInHand();
-            $bambooItem = \pocketmine\item\StringToItemParser::getInstance()->parse("bamboo");
-
-            if ($bambooItem !== null && $item->equals($bambooItem, false, false)) {
-                $event->cancel();
-
-                $entity->getWorld()->addParticle($entity->getLocation()->add(0, 1.5, 0), new HeartParticle(3));
-
-                if (!$entity->isTamed()) {
-                    $entity->setTamed(true);
-                }
-
-                $entity->startEating();
-
-                $item->setCount($item->getCount() - 1);
-                $player->getInventory()->setItemInHand($item);
-                return;
-            }
-        } elseif ($entity instanceof Cow) {
-            if (!$entity->canBeMilked()) {
-                $event->cancel();
-                return;
-            }
-
-            $item = $player->getInventory()->getItemInHand();
-            $bucketItem = VanillaItems::BUCKET();
-
-            if ($item->equals($bucketItem, false, false)) {
-                $event->cancel();
-
-                $milkBucket = \pocketmine\item\StringToItemParser::getInstance()->parse("milk_bucket");
-                if ($milkBucket !== null) {
-                    $item->setCount($item->getCount() - 1);
-                    if ($item->getCount() === 0) {
-                        $player->getInventory()->setItemInHand($milkBucket);
-                    } else {
-                        $player->getInventory()->setItemInHand($item);
-                        $player->getInventory()->addItem($milkBucket);
-                    }
-                    $entity->setMilkingCooldown(300);
-                }
-                return;
-            }
-        }
-    }
-
-    public function onPlayerToggleSneak(PlayerToggleSneakEvent $event): void
-    {
-        $player = $event->getPlayer();
-        if ($event->isSneaking()) {
-            foreach ($player->getWorld()->getEntities() as $entity) {
-                if (($entity instanceof Horse || $entity instanceof Donkey || $entity instanceof Mule || $entity instanceof Camel) && $entity->getRider() !== null && $entity->getRider()->getId() === $player->getId()) {
-                    $entity->dismountPlayer();
-                    break;
-                }
-            }
-        }
-    }
-
-    public function onDataPacketReceive(DataPacketReceiveEvent $event): void
-    {
-        $packet = $event->getPacket();
-        if ($packet instanceof PlayerAuthInputPacket) {
-            $player = $event->getOrigin()->getPlayer();
-            if ($player !== null) {
-                foreach ($player->getWorld()->getEntities() as $entity) {
-                    if (($entity instanceof Horse || $entity instanceof Donkey || $entity instanceof Mule || $entity instanceof Camel) && $entity->getRider() !== null && $entity->getRider()->getId() === $player->getId()) {
-                        $inputFlags = $packet->getInputFlags();
-                        $horseLocation = $entity->getLocation();
-
-                        $seatHeight = 2.0;
-                        if ($entity instanceof Horse) {
-                            $seatHeight = 2.3;
-                        } elseif ($entity instanceof Camel) {
-                            $seatHeight = 2.8;
-                        }
-
-                        $expectedY = $horseLocation->y + $seatHeight;
-                        $eyePosition = new \pocketmine\math\Vector3($horseLocation->x, $expectedY + 1.62, $horseLocation->z);
-
-                        $originalPosition = $packet->getPosition();
-                        $clientFeetY = $originalPosition->y - 1.62;
-
-                        if (abs($clientFeetY - $expectedY) > 0.12) {
-
-                            $pk = MovePlayerPacket::create(
-                                $player->getId(),
-                                $eyePosition,
-                                $player->getLocation()->pitch,
-                                $player->getLocation()->yaw,
-                                $player->getLocation()->yaw,
-                                MovePlayerPacket::MODE_NORMAL,
-                                $player->onGround,
-                                $entity->getId(),
-                                0,
-                                0,
-                                0
-                            );
-                            $player->getNetworkSession()->sendDataPacket($pk);
-                        }
-
-                        $eyePosition = new \pocketmine\math\Vector3($horseLocation->x, $expectedY + 1.62, $horseLocation->z);
-                        try {
-                            $reflection = new \ReflectionClass($packet);
-                            $property = $reflection->getProperty("position");
-                            $property->setAccessible(true);
-                            $property->setValue($packet, $eyePosition);
-                        } catch (\ReflectionException $e) {
-                        }
-
-                        $moveVecX = $packet->getMoveVecX();
-                        $moveVecZ = $packet->getMoveVecZ();
-
-                        if (abs($moveVecX) > 0.05 || abs($moveVecZ) > 0.05) {
-                            $yaw = $player->getLocation()->yaw;
-
-                            $forwardX = -sin(deg2rad($yaw));
-                            $forwardZ = cos(deg2rad($yaw));
-
-                            $rightX = cos(deg2rad($yaw));
-                            $rightZ = sin(deg2rad($yaw));
-
-                            $speed = 0.38;
-                            if ($entity instanceof Horse) {
-                                $speed = 0.52;
-                            } elseif ($entity instanceof Camel) {
-                                $speed = 0.42;
-                            }
-
-                            $motionX = ($forwardX * $moveVecZ + $rightX * $moveVecX) * $speed;
-                            $motionZ = ($forwardZ * $moveVecZ + $rightZ * $moveVecX) * $speed;
-
-                            $currentLocation = $entity->getLocation();
-                            $newPos = $currentLocation->add($motionX, 0, $motionZ);
-
-                            $blockAtNewPos = $entity->getWorld()->getBlock($newPos);
-                            $blockAbove = $entity->getWorld()->getBlock($newPos->add(0, 1.0, 0));
-
-                            if (!$blockAtNewPos->isSolid()) {
-
-                                $entity->teleport($newPos);
-                            } else if (!$blockAbove->isSolid()) {
-
-                                $entity->teleport($newPos->add(0, 1.0, 0));
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        } elseif ($packet instanceof InteractPacket) {
-            if ($packet->action === InteractPacket::ACTION_LEAVE_VEHICLE) {
-                $player = $event->getOrigin()->getPlayer();
-                if ($player !== null) {
-                    foreach ($player->getWorld()->getEntities() as $entity) {
-                        if (($entity instanceof Horse || $entity instanceof Donkey || $entity instanceof Mule || $entity instanceof Camel) && $entity->getRider() !== null && $entity->getRider()->getId() === $player->getId()) {
-                            $entity->dismountPlayer();
-                            break;
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -285,7 +79,7 @@ class EventListener implements Listener
         }
     }
 
-    public function onBlockBreak(\pocketmine\event\block\BlockBreakEvent $event): void
+    public function onBlockBreak(BlockBreakEvent $event): void
     {
         $block = $event->getBlock();
         $blockName = strtolower($block->getName());
@@ -295,7 +89,7 @@ class EventListener implements Listener
             if ($player->isCreative()) return;
 
             foreach ($block->getPosition()->getWorld()->getEntities() as $entity) {
-                if ($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\Bee) {
+                if ($entity instanceof Bee) {
                     if ($entity->getLocation()->distanceSquared($block->getPosition()) <= 256) {
                         $entity->anger($player);
                     }
@@ -323,9 +117,8 @@ class EventListener implements Listener
             $below2 = $world->getBlock($pos->subtract(0, 2, 0));
 
             if ($below1->getTypeId() === BlockTypeIds::SNOW && $below2->getTypeId() === BlockTypeIds::SNOW) {
-
                 $this->plugin->getScheduler()->scheduleDelayedTask(
-                    new class($world, $pos) extends \pocketmine\scheduler\Task {
+                    new class($world, $pos) extends Task {
                         private $world;
                         private $pos;
                         public function __construct($world, $pos)
@@ -343,14 +136,13 @@ class EventListener implements Listener
                     1
                 );
 
-                $location = new \pocketmine\entity\Location($pos->getX() + 0.5, $pos->getY() - 2, $pos->getZ() + 0.5, $world, (float) mt_rand(0, 360), 0.0);
+                $location = new Location($pos->getX() + 0.5, $pos->getY() - 2, $pos->getZ() + 0.5, $world, (float) mt_rand(0, 360), 0.0);
                 $golem = new SnowGolem($location);
                 $golem->spawnToAll();
                 return;
             }
 
             if ($below1->getTypeId() === BlockTypeIds::IRON && $below2->getTypeId() === BlockTypeIds::IRON) {
-
                 $leftArm = $world->getBlock($pos->add(-1, -1, 0));
                 $rightArm = $world->getBlock($pos->add(1, -1, 0));
                 $isXAligned = ($leftArm->getTypeId() === BlockTypeIds::IRON && $rightArm->getTypeId() === BlockTypeIds::IRON);
@@ -360,9 +152,8 @@ class EventListener implements Listener
                 $isZAligned = ($frontArm->getTypeId() === BlockTypeIds::IRON && $backArm->getTypeId() === BlockTypeIds::IRON);
 
                 if ($isXAligned || $isZAligned) {
-
                     $this->plugin->getScheduler()->scheduleDelayedTask(
-                        new class($world, $pos, $isXAligned) extends \pocketmine\scheduler\Task {
+                        new class($world, $pos, $isXAligned) extends Task {
                             private $world;
                             private $pos;
                             private $isXAligned;
@@ -390,7 +181,7 @@ class EventListener implements Listener
                         1
                     );
 
-                    $location = new \pocketmine\entity\Location($pos->getX() + 0.5, $pos->getY() - 2, $pos->getZ() + 0.5, $world, (float) mt_rand(0, 360), 0.0);
+                    $location = new Location($pos->getX() + 0.5, $pos->getY() - 2, $pos->getZ() + 0.5, $world, (float) mt_rand(0, 360), 0.0);
                     $golem = new IronGolem($location);
                     $golem->spawnToAll();
                 }
@@ -405,7 +196,7 @@ class EventListener implements Listener
             $damager = $event->getDamager();
             $entity = $event->getEntity();
 
-            if ($entity instanceof Player && $damager instanceof \pocketmine\entity\Living) {
+            if ($entity instanceof Player && $damager instanceof Living) {
                 $uuid = $entity->getUniqueId()->toString();
                 foreach ($entity->getWorld()->getNearbyEntities($entity->getBoundingBox()->expandedCopy(16, 8, 16)) as $near) {
                     if ($near instanceof Wolf && $near->isTamed() && $near->getOwnerUuid() === $uuid && !$near->isSitting()) {
@@ -414,8 +205,7 @@ class EventListener implements Listener
                 }
             }
 
-            if ($damager instanceof Player && $entity instanceof \pocketmine\entity\Living) {
-
+            if ($damager instanceof Player && $entity instanceof Living) {
                 if (!($entity instanceof Wolf && $entity->isTamed() && $entity->getOwnerUuid() === $damager->getUniqueId()->toString())) {
                     $uuid = $damager->getUniqueId()->toString();
                     foreach ($damager->getWorld()->getNearbyEntities($damager->getBoundingBox()->expandedCopy(16, 8, 16)) as $near) {

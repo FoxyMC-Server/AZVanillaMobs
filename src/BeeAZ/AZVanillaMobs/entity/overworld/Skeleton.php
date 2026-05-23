@@ -55,6 +55,16 @@ class Skeleton extends Monster {
             }
         }
 
+        foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(20, 10, 20)) as $entity) {
+            if (($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\IronGolem || $entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\SnowGolem) && $entity->isAlive() && !$entity->isClosed()) {
+                $dist = $this->location->distanceSquared($entity->getLocation());
+                if ($dist < $minDist) {
+                    $minDist = $dist;
+                    $nearest = $entity;
+                }
+            }
+        }
+
         if ($nearest !== null) {
             $this->targetEntity = $nearest;
             if ($minDist > 64) {
@@ -110,6 +120,16 @@ class Skeleton extends Monster {
                     }
                 }
 
+                foreach ($this->getWorld()->getNearbyEntities($this->getBoundingBox()->expandedCopy(20, 10, 20)) as $entity) {
+                    if (($entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\IronGolem || $entity instanceof \BeeAZ\AZVanillaMobs\entity\overworld\SnowGolem) && $entity->isAlive() && !$entity->isClosed()) {
+                        $dist = $this->location->distanceSquared($entity->getLocation());
+                        if ($dist < $minDist) {
+                            $minDist = $dist;
+                            $nearest = $entity;
+                        }
+                    }
+                }
+
                 if ($nearest !== null && $minDist < 200) {
                     $this->shootArrow($nearest);
                 }
@@ -121,7 +141,7 @@ class Skeleton extends Monster {
         return $hasUpdate;
     }
 
-    private function shootArrow(\pocketmine\player\Player $target): void {
+    private function shootArrow(\pocketmine\entity\Living $target): void {
         $diff = $target->getLocation()->subtractVector($this->getLocation());
         $pitch = -atan2($diff->y, sqrt($diff->x * $diff->x + $diff->z * $diff->z));
         $yaw = atan2($diff->z, $diff->x) - M_PI_2;
