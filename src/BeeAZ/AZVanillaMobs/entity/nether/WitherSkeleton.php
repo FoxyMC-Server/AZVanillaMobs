@@ -12,7 +12,7 @@ class WitherSkeleton extends Monster {
         try {
             $pk = new \pocketmine\network\mcpe\protocol\MobEquipmentPacket();
             $pk->actorRuntimeId = $this->getId();
-            $pk->item = \pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper::legacy(\pocketmine\network\mcpe\convert\TypeConverter::getInstance()->coreItemStackToNet(\pocketmine\item\VanillaItems::IRON_SWORD()));
+            $pk->item = \pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper::legacy(\pocketmine\network\mcpe\convert\TypeConverter::getInstance()->coreItemStackToNet(\pocketmine\item\VanillaItems::STONE_SWORD()));
             $pk->inventorySlot = 0;
             $pk->hotbarSlot = 0;
             $pk->windowId = 0;
